@@ -42,3 +42,7 @@
 
 # CMake build location
 build/**
+
+##### Editors #####
+# VSCode
+.vscode/**
