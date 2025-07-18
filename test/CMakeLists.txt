@@ -9,6 +9,7 @@ target_link_libraries(ScalarMinTest PUBLIC IntervalSolver)
 
 target_include_directories(ScalarMinTest PUBLIC 
                             "${PROJECT_SOURCE_DIR}"
+                            "${PROJECT_SOURCE_DIR}/src"
                             "${PROJECT_SOURCE_DIR}/src/IntervalSolver"
                             "${PROJECT_SOURCE_DIR}/src/BrentSolver"
                             )

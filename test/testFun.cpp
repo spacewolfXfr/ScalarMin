@@ -38,13 +38,21 @@ puremath interval_f fun1_I_dd(BOOST_ATTRIBUTE_UNUSED const interval_f &X)
     return interval_f(2.f,2.f);
 }
 
-bool test1()
+struct IntervalTesting::test_case<float,rounding_policy> test1
 {
-    float r = minimize_interval_method<float,rounding_policy>(test1_left,test1_right,
-    fun1,fun1_I,fun1_d,fun1_I_d,fun1_dd,fun1_I_dd,test1_eps);
+    .location   = 1.f,
+    .value      = 0.f,
+    .init_left  = -10.f,
+    .init_right =  10.f,
+    .precision  = 1e-9f,
 
-    return abs(r - test1_val) < test1_eps;
-}
+    .f  = fun1,
+    .F  = fun1_I,
+    .f_d    = fun1_d,
+    .F_d    = fun1_I_d,
+    .f_dd   = fun1_dd,
+    .F_dd   = fun1_I_dd,
+};
 
 // -------------------------------------------------- //
 // Test 2 : Sinusoid
@@ -78,11 +86,18 @@ puremath interval_f fun2_I_dd(const interval_f &X)
     return -boost::numeric::sin(X);
 }
 
-
-bool test2()
+struct IntervalTesting::test_case<float,rounding_policy> test2
 {
-    float r = minimize_interval_method<float,rounding_policy>(test2_left,test2_right,
-    fun2,fun2_I,fun2_d,fun2_I_d,fun2_dd,fun2_I_dd,test2_eps);
+    .location   = 3*M_PI_2f,
+    .value      = -1.f,
+    .init_left  = 0.f,
+    .init_right = 3*M_PIf,
+    .precision  = 1e-9f,
 
-    return abs(r - test2_val) < test2_eps;
-}
+    .f  = fun2,
+    .F  = fun2_I,
+    .f_d    = fun2_d,
+    .F_d    = fun2_I_d,
+    .f_dd   = fun2_dd,
+    .F_dd   = fun2_I_dd,
+};

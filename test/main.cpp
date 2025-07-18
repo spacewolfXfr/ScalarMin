@@ -11,6 +11,8 @@
 int main(int, char**){
     std::cout << "Hello, from ScalarMin version ";// << ScalarMin_VERSION_STR << std::endl;
 
-    assert(test1());
-    assert(test2());
+    // assert(IntervalTesting::test_interval_with_derivatives(test1));
+    assert(IntervalTesting::test_interval_no_derivatives(test1));
+    // assert(IntervalTesting::test_interval_with_derivatives(test2));
+    assert(IntervalTesting::test_interval_no_derivatives(test2));
 }
