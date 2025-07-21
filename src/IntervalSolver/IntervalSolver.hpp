@@ -10,6 +10,26 @@
 #include <functional>
 #include <optional>
 #include <utility>
+#include <iostream>
+
+
+#if DEBUG_VISUALISE >= 1
+
+#include "Visualisation/Visualisation.hpp"
+#pragma message "Building with visualisation"
+
+#ifndef DEBUG_VISUALISE_SAMPLES
+#warning DEBUG_VISUALISE_SAMPLES is undefined whereas DEBUG_VISUALISE is! Falling back to default value of 200
+#define DEBUG_VISUALISE_SAMPLES 200
+#endif
+
+#if DEBUG_VISUALISE_SAMPLES <= 0
+#warning DEBUG_VISUALISE_SAMPLES is ill-defined (less than 0) ! Falling back to default value of 200
+#define DEBUG_VISUALISE_SAMPLES 200
+#endif
+
+#endif
+
 
 namespace IntervalSolver
 {
@@ -27,7 +47,7 @@ namespace IntervalSolver
      * Implementation relying on the Boost Interval library: https://www.boost.org/doc/libs/latest/libs/numeric/interval/doc/interval.htm
      * 
      * @tparam T        : Scalar type (either float, double or long)
-     * @tparam Policies : A Policy for rounding and checking, from boost::numeric::interval
+     * @tparam Policies : Policies for rounding and checking, from boost::numeric::interval
      * @param left          : Left side of the initial search interval
      * @param right         : Right side of the initial search interval
      * @param f             : Function to optimize
@@ -61,7 +81,7 @@ namespace IntervalSolver
      * Implementation relying on the Boost Interval library: https://www.boost.org/doc/libs/latest/libs/numeric/interval/doc/interval.htm
      * 
      * @tparam T        : Scalar type (either float, double or long)
-     * @tparam Policies : A Policy for rounding and checking, from boost::numeric::interval
+     * @tparam Policies : Policies for rounding and checking, from boost::numeric::interval
      * @param left          : Left side of the initial search interval
      * @param right         : Right side of the initial search interval
      * @param f             : Function to optimize
@@ -82,11 +102,11 @@ namespace IntervalSolver
 
     template<typename T, class Policies>
     std::pair<std::optional<interval<T, Policies>>,std::optional<interval<T, Policies>>> interval_reduction(interval<T, Policies> &X0,
-        std::function<T(const T&)> f,
-        std::function<interval<T, Policies>(const interval<T, Policies>&)> F,
-        std::function<T(const T&)> f_d,
-        std::function<interval<T, Policies>(const interval<T, Policies>&)> F_d,
-        std::function<T(const T&)> f_dd,
+        BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f,
+        BOOST_ATTRIBUTE_UNUSED std::function<interval<T, Policies>(const interval<T, Policies>&)> F,
+        BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f_d,
+        BOOST_ATTRIBUTE_UNUSED std::function<interval<T, Policies>(const interval<T, Policies>&)> F_d,
+        BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f_dd,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F_dd,
         T x, T f_x, T f_d_x, T best_value
     )
@@ -183,6 +203,12 @@ namespace IntervalSolver
         std::optional<T> lower_bound
     )
     {
+
+        // 0. Debug (visualisation) setup if needed
+#ifdef DEBUG_VISUALISE
+        using namespace Visualisation;
+#endif
+
         typedef interval<T, Policies> inteval_t;
         // 1.
         assert(left < right);
@@ -215,6 +241,18 @@ namespace IntervalSolver
             // a.
             inteval_t X = interval_list.front();
 
+#ifdef DEBUG_VISUALISE
+            Plot2D plot = init_plot(left,right);
+
+            plot_function(left,right,DEBUG_VISUALISE_SAMPLES,f,plot).label("Obj function(x)");
+            plot_hline(left,right,best,plot).label("Best_known value");
+
+            plot_intervals(interval_list,F,plot);
+            Figure fig = {{plot}};
+            Canvas canvas = {{fig}};
+            canvas.show();
+#endif
+
             // b.
             inteval_t F0 = F(X);
             if (F0.lower() > best)
@@ -234,6 +272,13 @@ namespace IntervalSolver
             {
                 best = f_mid;
                 best_loc = x_mid;
+                if (lower_bound.has_value())
+                {
+                    if (abs(best-lower_bound.value()) < epsilon)
+                    {
+                        return best_loc;
+                    }
+                }
             }
 
             auto candidate_intervals = interval_reduction(X,f,F,f_d,F_d,f_dd,F_dd,x_mid,f_mid,f_d_mid,best);
@@ -274,8 +319,13 @@ namespace IntervalSolver
         std::optional<T> lower_bound
     )
     {
-        typedef interval<T, Policies> inteval_t;
+        // 0. Debug (visualisation) setup if needed
+#ifdef DEBUG_VISUALISE
+        using namespace Visualisation;
+#endif
         
+        typedef interval<T, Policies> inteval_t;
+
         // 1. Initialize search list
         assert(left < right);
         inteval_t X0(left,right);
@@ -307,10 +357,24 @@ namespace IntervalSolver
             // a. Get a search interval
             inteval_t X = interval_list.front();
 
+            // a(bis). Debug visualisation
+#ifdef DEBUG_VISUALISE
+            Plot2D plot = init_plot(left,right);
+
+            plot_function(left,right,DEBUG_VISUALISE_SAMPLES,f,plot).label("Obj function(x)");
+            plot_hline(left,right,best,plot).label("Best_known value");
+
+            plot_intervals(interval_list,F,plot);
+            Figure fig = {{plot}};
+            Canvas canvas = {{fig}};
+            canvas.show();
+#endif
+
             // b. Estimate its image; discard it if its lowest is greater than the current estimate of the minimum
             inteval_t F0 = F(X);
             if (F0.lower() > best)
             {
+                interval_list.pop_front();
                 continue;
             }
 
@@ -326,6 +390,13 @@ namespace IntervalSolver
             {
                 best = x_val;
                 best_loc = x_mid;
+                if (lower_bound.has_value())
+                {
+                    if (abs(best-lower_bound.value()) < epsilon)
+                    {
+                        return best_loc;
+                    }
+                }
             }
 
             // f. Split the interval in two subparts; keep only those large enough
@@ -344,8 +415,13 @@ namespace IntervalSolver
                 interval_list.push_back(i_high);
             }
             
+            // std::cout << "Current estimate (location,value): ( " << best_loc << " , " << best << " )" << std::endl;
+            // std::cout << "Processed interval: [ " << X.lower() << " , " << X.upper() << " ]  (size: " << width(X) << " )" << std::endl;
+
             // Pop at the end to avoid killing the reference
             interval_list.pop_front();
+
+            
         }
 
         return best_loc;
