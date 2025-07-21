@@ -13,10 +13,6 @@
 #include "testInterface.hpp"
 
 
-// About these GCC attributes, symbolizing 'pure, mathematical functions': https://stackoverflow.com/questions/29117836/attribute-const-vs-attribute-pure-in-gnu-c
-#define pure __attribute__((pure))
-#define puremath __attribute__((const))
-
 using namespace IntervalSolver;
 
 // We need a specific rounding policy to handle cos and sin: https://stackoverflow.com/questions/15860761/c-boost-interval-and-cos

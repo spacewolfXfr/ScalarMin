@@ -10,9 +10,12 @@
 
 int main(int, char**){
     std::cout << "Hello, from ScalarMin version ";// << ScalarMin_VERSION_STR << std::endl;
+    std::cout << std::endl;
 
-    // assert(IntervalTesting::test_interval_with_derivatives(test1));
+    assert(IntervalTesting::test_interval_with_derivatives(test1));
     assert(IntervalTesting::test_interval_no_derivatives(test1));
-    // assert(IntervalTesting::test_interval_with_derivatives(test2));
+    assert(IntervalTesting::test_interval_with_derivatives(test2));
     assert(IntervalTesting::test_interval_no_derivatives(test2));
+
+    return 0;
 }

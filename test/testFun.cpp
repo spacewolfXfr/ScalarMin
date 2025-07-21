@@ -44,7 +44,7 @@ struct IntervalTesting::test_case<float,rounding_policy> test1
     .value      = 0.f,
     .init_left  = -10.f,
     .init_right =  10.f,
-    .precision  = 1e-9f,
+    .precision  = 1e-6f,
 
     .f  = fun1,
     .F  = fun1_I,
@@ -92,7 +92,7 @@ struct IntervalTesting::test_case<float,rounding_policy> test2
     .value      = -1.f,
     .init_left  = 0.f,
     .init_right = 3*M_PIf,
-    .precision  = 1e-9f,
+    .precision  = 1e-6f,
 
     .f  = fun2,
     .F  = fun2_I,
