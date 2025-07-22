@@ -257,6 +257,7 @@ namespace IntervalSolver
             inteval_t F0 = F(X);
             if (F0.lower() > best)
             {
+                interval_list.pop_front();
                 continue;
             }
 
@@ -288,7 +289,7 @@ namespace IntervalSolver
             if (interval_1)
             {
                 inteval_t i1 = interval_1.value();
-                if (width(i1) > epsilon)
+                if (width(i1) > epsilon/4)
                 {
                     interval_list.push_back(i1);
                 }
@@ -297,7 +298,7 @@ namespace IntervalSolver
             if (interval_2)
             {
                 inteval_t i2 = interval_2.value();
-                if (width(i2) > epsilon)
+                if (width(i2) > epsilon/4)
                 {
                     interval_list.push_back(i2);
                 }
@@ -403,13 +404,13 @@ namespace IntervalSolver
             T a = X.lower();
             T b = X.upper();
 
-            if (std::abs(a - x_mid) > epsilon)
+            if (std::abs(a - x_mid) > epsilon/4)
             {
                 inteval_t i_low(a,x_mid);
                 interval_list.push_back(i_low);
             }
 
-            if (std::abs(b - x_mid) > epsilon)
+            if (std::abs(b - x_mid) > epsilon/4)
             {
                 inteval_t i_high(x_mid,b);
                 interval_list.push_back(i_high);
