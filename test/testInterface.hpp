@@ -25,10 +25,9 @@ namespace IntervalTesting
 
     using namespace IntervalSolver;
 
-    template<typename T, class Policies>
-    class TestCase
+    template<typename T>
+    struct TestValues
     {
-    protected:
         T location;     /// Where the minimum is located
         T value;        /// The value of f at the minimum
         T init_left;    /// Lower bound of the initial research interval
@@ -36,9 +35,23 @@ namespace IntervalTesting
         T precision;    /// Precision desired for the minimum location and value
         std::optional<T> lower_bound = std::nullopt;    /// A known lower-bound on the global minimum
 
-        void print_results(T expected_loc, T expected_val,
-                    T loc, T val, T epsilon)
+    };
+
+    template<typename T, class Policies>
+    class TestCase
+    {
+    public:
+        TestCase(struct TestValues<T> _testVals) : testVals(_testVals) {}
+
+        struct TestValues<T> testVals;
+        
+
+        void print_results(T loc)
         {
+            T expected_loc  = testVals.location;
+            T expected_val  = testVals.value;
+            T val           = f(loc);
+            T epsilon       = testVals.precision;
 
             bool loc_check = abs(expected_loc-loc) < epsilon;
             bool val_check = abs(expected_val-val) < epsilon;
@@ -65,121 +78,51 @@ namespace IntervalTesting
         }
 
 
+        virtual T f(T) const = 0;                                               /// The function the minimum is to be found
+        virtual interval<T,Policies> F(const interval<T,Policies>&) const = 0;  /// f translation in interval algebra
+
+        T minimize_interval_method(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            auto Fbind = [this](const interval<T,Policies> &I){return this->F(I);};
+
+            return IntervalSolver::minimize_interval_method<T,Policies>(
+                testVals.init_left,testVals.init_right,
+                fbind,Fbind,
+                testVals.precision,testVals.lower_bound
+            );
+        }
+    };
+
+    template<typename T, class Policies>
+    class TestCaseWithDerivatives : public TestCase<T,Policies>
+    {
     public:
-        virtual T f(T) = 0;                                             /// The function the minimum is to be found
-        virtual interval<T,Policies> F(const interval<T,Policies>&) = 0;    /// f translation in interval algebra
+        TestCaseWithDerivatives(struct TestValues<T> _testVals) : TestCase<T,Policies>(_testVals) {}
 
+        virtual T f_d(T) const = 0;                                                 /// f First derivative
+        virtual interval<T,Policies> F_d(const interval<T,Policies>&) const = 0;    /// f_d translation in the interval algebra
+        virtual T f_dd(T) const = 0;                                                /// f Seconde derivative
+        virtual interval<T,Policies> F_dd(const interval<T,Policies>&) const = 0;   /// f_dd translation in the interval algebra
 
+        T minimize_interval_method_with_derivatives(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            auto Fbind = [this](const interval<T,Policies> &I){return this->F(I);};
+
+            auto f_dbind = [this](T x){return this->f_d(x);};
+            auto F_dbind = [this](const interval<T,Policies> &I){return this->F_d(I);};
+
+            auto f_ddbind = [this](T x){return this->f_dd(x);};
+            auto F_ddbind = [this](const interval<T,Policies> &I){return this->F_dd(I);};
+
+            return IntervalSolver::minimize_interval_method<T,Policies>(
+                this->testVals.init_left,this->testVals.init_right,
+                fbind,Fbind,
+                f_dbind,F_dbind,
+                f_ddbind,F_ddbind,
+                this->testVals.precision,this->testVals.lower_bound
+            );
+        }
     };
-
-    template<typename T, class Policies>
-    class TestCaseWithDerivatives : public TestCase
-    {
-    public:
-        virtual T f_d(T) = 0;                                           /// f First derivative
-        virtual interval<T,Policies> F_d(const interval<T,Policies>&) = 0;  /// f_d translation in the interval algebra
-        virtual T f_dd(T) = 0;                                          /// f Seconde derivative
-        virtual interval<T,Policies> F_dd(const interval<T,Policies>&) = 0; /// f_dd translation in the interval algebra
-    };
-
-    template<typename T, class Policies>
-    struct test_case 
-    {
-        T location;     /// Where the minimum is located
-        T value;        /// The value of f at the minimum
-        T init_left;    /// Lower bound of the initial research interval
-        T init_right;   /// Upper bound of the initial research interval
-        T precision;    /// Precision desired for the minimum location and value
-        std::optional<T> lower_bound = std::nullopt;    /// A known lower-bound on the global minimum
-
-        std::function<T(T)> f;                                          /// The function the minimum is to be found
-        std::function<interval<T,Policies>(const interval<T,Policies>&)> F; /// f translation in interval algebra
-        std::optional<std::function<T(T)>> f_d = std::nullopt;                                              /// f First derivative
-        std::optional<std::function<interval<T,Policies>(const interval<T,Policies>&)>> F_d = std::nullopt;     /// f_d translation in the interval algebra 
-        std::optional<std::function<T(T)>> f_dd = std::nullopt;                                             /// f Seconde derivative
-        std::optional<std::function<interval<T,Policies>(const interval<T,Policies>&)>> F_dd = std::nullopt;    /// f_dd translation in the interval algebra
-    };
-
-    template<typename T>
-    void print_results(T expected_loc, T expected_val,
-                    T loc, T val, T epsilon)
-    {
-
-        bool loc_check = abs(expected_loc-loc) < epsilon;
-        bool val_check = abs(expected_val-val) < epsilon;
-
-        auto loc_txt = (loc_check) ? "True" : "False";
-        auto val_txt = (val_check) ? "True" : "False";
-
-
-        std::cout   << "/----------------------------------------\\" << std::endl
-                    << "| Tests results, with precision " << epsilon << std::endl << std::endl;
-
-        std::cout   << "| --- Value ---"                                        << std::endl
-                    << "| Expected value   : "  << expected_val                 << std::endl
-                    << "| Got value        : "  << val                          << std::endl
-                    << "| Value diff       : "  << abs(expected_val-val)        << std::endl
-                    << "| Value check      : "  << val_txt                      << std::endl << std::endl;
-
-
-        std::cout   << "| --- Location ---"                                     << std::endl
-                    << "| Expected location   : "   << expected_loc             << std::endl
-                    << "| Got location        : "   << loc                      << std::endl
-                    << "| Location diff       : "   << abs(expected_loc-loc)    << std::endl
-                    << "| Location check      : "   << loc_txt                  << std::endl << std::endl;
-    }
-
-    /**
-     * @brief Function to test an Interval Global minimization test case
-     * 
-     * @tparam T        : Scalar type (either float, double or long)
-     * @tparam Policies : A Policies for rounding and checking, from boost::numeric::interval
-     * @param t         : The test case structure
-     * @return true     : Test successful, minimum is at the correct location and have the correct value
-     * @return false    : Test failure
-     */
-    template<typename T, class Policies>
-    bool test_interval_with_derivatives(const struct test_case<T,Policies> &t)
-    {
-        assert(t.f_d.has_value()  );
-        assert(t.F_d.has_value()  );
-        assert(t.f_dd.has_value() );
-        assert(t.F_dd.has_value() );
-
-        T min_res = IntervalSolver::minimize_interval_method<T,Policies>(
-            t.init_left,t.init_right,
-            t.f,t.F,
-            t.f_d.value(),t.F_d.value(),
-            t.f_dd.value(),t.F_dd.value(),
-            t.precision,t.lower_bound
-        );
-
-        print_results<T>(t.location,t.value,min_res,t.f(min_res),t.precision);
-
-        return (abs(min_res - t.location) < t.precision) && (abs(t.f(min_res) - t.value) < t.precision);
-    }
-
-    /**
-     * @brief Function to test an Interval Global minimization test case, but with the derivatives-free method
-     * 
-     * @tparam T        : Scalar type (either float, double or long)
-     * @tparam Policies : A Policies for rounding and checking, from boost::numeric::interval
-     * @param t         : The test case structure
-     * @return true     : Test successful, minimum is at the correct location and have the correct value
-     * @return false    : Test failure
-     */
-    template<typename T, class Policies>
-    bool test_interval_no_derivatives(const struct test_case<T,Policies> &t)
-    {
-        T min_res = IntervalSolver::minimize_interval_method<T,Policies>(
-            t.init_left,t.init_right,
-            t.f,t.F,
-            t.precision,t.lower_bound
-        );
-
-        print_results<T>(t.location,t.value,min_res,t.f(min_res),t.precision);
-
-        return (abs(min_res - t.location) < t.precision) && (abs(t.f(min_res) - t.value) < t.precision);
-    }
-
 }

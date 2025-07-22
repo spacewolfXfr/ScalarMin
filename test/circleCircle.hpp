@@ -3,12 +3,14 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+#pragma once
+
 #include "testInterface.hpp"
 
 #include <cmath>
 
 template<typename T, class Policies>
-class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
+class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
 {
 
     private:
@@ -18,23 +20,27 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
         const T Dphi;
 
     public:
-        T f(T t)
+        CircleCircle(IntervalTesting::TestValues<T> vals, T _Dx, T _Dy, T _r1, T _r2, T _w1, T _w2, T _Dphi)
+        : IntervalTesting::TestCase<T,Policies>(vals),
+             Dx(_Dx), Dy(_Dy), r1(_r1), r2(_r2), w1(_w1), w2(_w2), Dphi(_Dphi) {}
+
+        pure T f(T t) const
         {
             T x = Dx + r1*std::cos(w1*t) - r2*std::cos(w2*t+Dphi);
             T y = Dy + r1*std::sin(w1*t) - r2*std::sin(w2*t+Dphi);
             return x*x + y*y;
         } 
 
-        IntervalTesting::interval<T,Policies> F(const IntervalTesting::interval<T,Policies> &I)
+        pure IntervalTesting::interval<T,Policies> F(const IntervalTesting::interval<T,Policies> &I) const
         {
-            using boost::numeric;
+            using namespace boost::numeric;
 
             interval<T,Policies> x_I = Dx + r1*cos(w1*I) - r2*cos(w2*I+Dphi);
             interval<T,Policies> y_I = Dy + r1*sin(w1*I) - r2*sin(w2*I+Dphi);
             return square(x_I) + square(y_I);
         }
 
-        T f_d(T t)
+        pure T f_d(T t) const
         {
             T c1 = std::cos(w1*t);
             T s1 = std::sin(w1*t);
@@ -51,15 +57,15 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
             return (x_d*x + y_d*y)*2;
         } 
 
-        IntervalTesting::interval<T,Policies> F_d(const IntervalTesting::interval<T,Policies> &I)
+        pure IntervalTesting::interval<T,Policies> F_d(const IntervalTesting::interval<T,Policies> &I) const
         {
-            using boost::numeric;
+            using namespace boost::numeric;
 
-            interval<T,Policies> c1 = cos(w1*t);
-            interval<T,Policies> s1 = sin(w1*t);
+            interval<T,Policies> c1 = cos(w1*I);
+            interval<T,Policies> s1 = sin(w1*I);
 
-            interval<T,Policies> c2 = cos(w2*t+Dphi);
-            interval<T,Policies> s2 = sin(w2*t+Dphi);
+            interval<T,Policies> c2 = cos(w2*I+Dphi);
+            interval<T,Policies> s2 = sin(w2*I+Dphi);
 
             interval<T,Policies> x_I = Dx + r1*c1 - r2*c2;
             interval<T,Policies> y_I = Dy + r1*s1 - r2*s2;
@@ -69,7 +75,7 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
             return (x_d_I*x_I + y_d_I*y_I)*2;
         }
 
-        T f_dd(T t)
+        pure T f_dd(T t) const
         {
             T c1 = std::cos(w1*t);
             T s1 = std::sin(w1*t);
@@ -89,15 +95,15 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
             return (x_d*x_d+x*x_dd + y_d*y_d+y*y_dd)*2;
         } 
 
-        IntervalTesting::interval<T,Policies> F_dd(const IntervalTesting::interval<T,Policies> &I)
+        pure IntervalTesting::interval<T,Policies> F_dd(const IntervalTesting::interval<T,Policies> &I) const
         {
-            using boost::numeric;
+            using namespace boost::numeric;
 
-            interval<T,Policies> c1 = cos(w1*t);
-            interval<T,Policies> s1 = sin(w1*t);
+            interval<T,Policies> c1 = cos(w1*I);
+            interval<T,Policies> s1 = sin(w1*I);
 
-            interval<T,Policies> c2 = cos(w2*t+Dphi);
-            interval<T,Policies> s2 = sin(w2*t+Dphi);
+            interval<T,Policies> c2 = cos(w2*I+Dphi);
+            interval<T,Policies> s2 = sin(w2*I+Dphi);
 
             interval<T,Policies> x_I = Dx + r1*c1 - r2*c2;
             interval<T,Policies> y_I = Dy + r1*s1 - r2*s2;
@@ -108,7 +114,7 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives
             interval<T,Policies> x_dd_I = -w1*w1*r1*c1 + w2*w2*r2*c2;
             interval<T,Policies> y_dd_I = -w1*w1*r1*s1 + w2*w2*r2*s2;
             
-            return (square(x_d_I)+x_I*x_x_dd_I + square(y_d_I)+y_I*y_dd_I)*2;
+            return (square(x_d_I)+x_I*x_dd_I + square(y_d_I)+y_I*y_dd_I)*2;
         }
 
 };
