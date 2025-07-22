@@ -6,6 +6,6 @@
 find_package(Boost REQUIRED)
 
 add_library(IntervalSolver INTERFACE)
-target_sources(IntervalSolver INTERFACE IntervalSolver.hpp)
+target_sources(IntervalSolver INTERFACE IntervalSolver.hpp RoundingPolicies.hpp)
 
 target_link_libraries(IntervalSolver INTERFACE Boost::headers)
