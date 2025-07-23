@@ -5,26 +5,117 @@
 
 #include <gtest/gtest.h>
 #include <array>
+#include <tuple>
 #include <vector>
+#include <concepts>
+
 
 #include "RoundingPolicies.hpp"
 #include "testInterface.hpp"
 #include "circleCircle.hpp"
 #include "polynomials.hpp"
 
-#ifndef TEST_SEED_COUNT
-#define TEST_SEED_COUNT 4
+// -------------------- Configurable constants -------------------- //
+
+
+// -- Number of random test to generate -- //
+#if !defined(TEST_SEED_COUNT) || TEST_SEED_COUNT <= 0
+#define TEST_SEED_COUNT 10
 #endif
 
+// -- Precision and degree for polynomial tests in function of float precision type -- //
+// Precision and degree for float polynomial tests
+#if !defined(TEST_FLOAT_PRECISION)
+#define TEST_FLOAT_PRECISION 1e-3f
+#endif
+
+#if !defined(TEST_FLOAT_POLY_MAX_DEGREE) || TEST_FLOAT_POLY_MAX_DEGREE <= 2
+#define TEST_FLOAT_POLY_MAX_DEGREE 4
+#endif
+
+// Precision and degree for double float polynomial tests
+#if !defined(TEST_DOUBLE_PRECISION)
+#define TEST_DOUBLE_PRECISION 1e-6
+#endif
+
+#if !defined(TEST_DOUBLE_POLY_MAX_DEGREE) || TEST_DOUBLE_POLY_MAX_DEGREE <= 2
+#define TEST_DOUBLE_POLY_MAX_DEGREE 10
+#endif
+
+// Precision and degree for long double float polynomial tests
+#if !defined(TEST_LONG_DOUBLE_PRECISION)
+#define TEST_LONG_DOUBLE_PRECISION 1e-8
+#endif
+
+#if !defined(TEST_LONG_DOUBLE_POLY_MAX_DEGREE) || TEST_LONG_DOUBLE_POLY_MAX_DEGREE <= 2
+#define TEST_LONG_DOUBLE_POLY_MAX_DEGREE 10
+#endif
+
+// -- Search intervals I and root generation intervals R -- //
+// Subcase R included in I
+#if !defined(TEST_INNER_I_MIN)
+#define TEST_INNER_I_MIN -10
+#endif
+
+#if !defined(TEST_INNER_I_MAX)
+#define TEST_INNER_I_MAX  10
+#endif
+
+#if !defined(TEST_INNER_R_MIN)
+#define TEST_INNER_R_MIN -5
+#endif
+
+#if !defined(TEST_INNER_R_MAX)
+#define TEST_INNER_R_MAX  5
+#endif
+
+// Subcase I included in R
+#if !defined(TEST_OUTER_I_MIN)
+#define TEST_OUTER_I_MIN -5
+#endif
+
+#if !defined(TEST_OUTER_I_MAX)
+#define TEST_OUTER_I_MAX  5
+#endif
+
+#if !defined(TEST_OUTER_R_MIN)
+#define TEST_OUTER_R_MIN -10
+#endif
+
+#if !defined(TEST_OUTER_R_MAX)
+#define TEST_OUTER_R_MAX  10
+#endif
+
+
 // -------------------- Helper functions -------------------- //
+
+template<typename T>
+constexpr bool check_interval_nonempty(T l, T r)
+{
+  return (l < r);
+}
+
+template<typename T>
+constexpr bool check_interval_inclusion(T outer_l, T outer_r, T inner_l, T inner_r)
+{
+  check_interval_nonempty(outer_l,outer_r);
+  check_interval_nonempty(inner_l,inner_r);
+
+  return (
+    (outer_l < inner_l) &&
+    (outer_l < inner_r) &&
+    (inner_l < outer_r) &&
+    (inner_r < outer_r)
+  );
+}
 
 template<typename T, class Policies>
 void EXPECT_MINIMIZE_RESULTS(IntervalTesting::TestCase<T,Policies> &c)
 {
   T s = c.minimize_interval_method();
 
-  EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision);
-  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision);
+  EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, derivative free) Minimum locations do not match";
+  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision)  << "(Interval method, derivative free) Minimum values do not match";
 }
 
 template<typename T, class Policies>
@@ -32,63 +123,72 @@ void EXPECT_MINIMIZE_DER_RESULTS(IntervalTesting::TestCaseWithDerivatives<T,Poli
 {
   T s = c.minimize_interval_method_with_derivatives();
 
-  EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision);
-  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision);
+  EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, with derivatives) Minimum locations do not match";
+  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision)  << "(Interval method, with derivatives) Minimum values do not match";
 }
 
 // -------------------- GTest classes -------------------- //
 
-class TestPolynomialByDegree : public testing::TestWithParam<unsigned short>
+// Using paired types to test accross two kinds of types:
+// https://stackoverflow.com/questions/52256953/c-multiple-parameters-with-gtest-typed-test
+template<typename PairedType = std::pair<float,OptimizationRounding::standard_rounding<float>>>
+class TestPolynomialByFloatType : public testing::Test
 {
 protected:
-  TestPolynomialByDegree() 
+
+  static constexpr PairedType::first_type get_precision()
   {
-    Polynomial<float,OptimizationRounding::standard_rounding<float>,GetParam()> p_std_float;
+    typedef typename PairedType::first_type  T;
 
+    T precision;
 
+    if (std::is_same<T, double>::value)
+    {
+      precision   = TEST_DOUBLE_PRECISION;
+    }
+    else if (std::is_same<T, long double>::value)
+    {
+      precision   = TEST_LONG_DOUBLE_PRECISION;
+    }
+    else
+    {
+      precision   = TEST_FLOAT_PRECISION;
+    }
 
+    return precision;
   }
 
+  static constexpr size_t get_max_degree()
+  {
+    typedef typename PairedType::first_type  T;
 
-};
+    size_t max_degree;
 
-// TODO: Meta-meta testing ??
-// https://stackoverflow.com/questions/8507385/google-test-is-there-a-way-to-combine-a-test-which-is-both-type-parameterized-a
-
-template<class T>
-struct foo_test : public ::testing::Test {
-    static std::vector<T> _range_;
-};
-
-TYPED_TEST_CASE_P(foo_test);
-
-TYPED_TEST_P(foo_test, IsGreaterThanZero) {
-    for (TypeParam value : foo_test<TypeParam>::_range_) {
-        EXPECT_GT(value,0);
+    if (std::is_same<T, double>::value)
+    {
+      max_degree  = TEST_DOUBLE_POLY_MAX_DEGREE;
     }
-}
+    else if (std::is_same<T, long double>::value)
+    {
+      max_degree  = TEST_LONG_DOUBLE_POLY_MAX_DEGREE;
+    }
+    else
+    {
+      max_degree  = TEST_FLOAT_POLY_MAX_DEGREE;
+    }
 
-REGISTER_TYPED_TEST_CASE_P(foo_test,IsGreaterThanZero);
+    return max_degree;
+  }
 
-typedef ::testing::Types<char, int, float> MyTypes;
-INSTANTIATE_TYPED_TEST_CASE_P(My, foo_test, MyTypes);
+  TestPolynomialByFloatType() {}
 
-template<> std::vector<char> foo_test<char>::_range_{'1','2','3'};
-template<> std::vector<int> foo_test<int>::_range_{1,2,3};
-template<> std::vector<float> foo_test<float>::_range_{1.1,2.2,0.0};
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
-
-
-
-// INSTANTIATE_TEST_SUITE_P()
+};
 
 // -------------------- Actual testing -------------------- //
 
+// ---------- Test on polynomials ---------- //
 
+// Simple test to find the minimum of (X-1)²
 TEST(StdPolynomials, RootOne) {
 
   // ----- Using float ----- //
@@ -97,12 +197,12 @@ TEST(StdPolynomials, RootOne) {
     .value      = 0.f,
     .init_left  = -10.f,
     .init_right =  10.f,
-    .precision  = 1e-4f,
+    .precision  = TEST_FLOAT_PRECISION,
   };
 
-  std::array<float,3> c1{1,-2,1};
+  std::vector<float> c1{1,-2,1};
 
-  auto p1 = Polynomial<float,OptimizationRounding::standard_rounding<float>,2>(t1,c1);
+  auto p1 = Polynomial<float,OptimizationRounding::standard_rounding<float>>(t1,c1);
 
   EXPECT_MINIMIZE_RESULTS(p1);
   EXPECT_MINIMIZE_DER_RESULTS(p1);
@@ -113,95 +213,87 @@ TEST(StdPolynomials, RootOne) {
     .value      = 0.,
     .init_left  = -10.,
     .init_right =  10.,
-    .precision  = 1e-8,
+    .precision  = TEST_DOUBLE_PRECISION,
   };
 
-  std::array<double,3> c2{1,-2,1};
+  std::vector<double> c2{1,-2,1};
 
-  auto p2 = Polynomial<double,OptimizationRounding::standard_rounding<double>,2>(t2,c2);
+  auto p2 = Polynomial<double,OptimizationRounding::standard_rounding<double>>(t2,c2);
 
   EXPECT_MINIMIZE_RESULTS(p2);
   EXPECT_MINIMIZE_DER_RESULTS(p2);
 
 }
 
-TEST(StdPolynomials, FloatRandomRootsInRange) {
-  // ----- Float, roots in interval ----- //
-  float precision_f = 1e-4f;
-  float r_min = -1.f;
-  float r_max =  1.f;
-  float I_min = -10.f;
-  float I_max =  10.f;
 
-  for(unsigned short i = 0 ; i < TEST_SEED_COUNT ; i++)
+// Tests on random polynomials ; inspect the effects of float precision and rounding types
+using TestTypes = ::testing::Types<
+  std::pair<float,OptimizationRounding::standard_rounding<float>>,
+  std::pair<float,OptimizationRounding::fast_rounding<float>>,
+  std::pair<double,OptimizationRounding::standard_rounding<double>>,
+  std::pair<double,OptimizationRounding::fast_rounding<double>>,
+  std::pair<long double,OptimizationRounding::standard_rounding<long double>>,
+  std::pair<long double,OptimizationRounding::fast_rounding<long double>>
+  >;
+
+TYPED_TEST_CASE(TestPolynomialByFloatType,TestTypes);
+
+
+TYPED_TEST(TestPolynomialByFloatType, RootsInRange)
+{
+  typedef typename TypeParam::first_type T;
+  typedef typename TypeParam::second_type Policies;
+
+  size_t max_degree = TestFixture::get_max_degree();
+  T precision = TestFixture::get_precision();
+
+  constexpr T I_min = static_cast<T>(TEST_INNER_I_MIN);
+  constexpr T I_max = static_cast<T>(TEST_INNER_I_MAX);
+  constexpr T R_min = static_cast<T>(TEST_INNER_R_MIN);
+  constexpr T R_max = static_cast<T>(TEST_INNER_R_MAX);
+
+  static_assert(check_interval_inclusion(I_min,I_max,R_min,R_max));
+
+  for(auto i = 0; i < TEST_SEED_COUNT; i++)
   {
-    auto poly_test = generate_polynomial_test_case<float,OptimizationRounding::standard_rounding<float>,3>(
-      i, r_min, r_max, I_min, I_max, precision_f
-    );
+    auto poly_test = generate_polynomial_test_case<T,Policies>(i,max_degree,
+      R_min,R_max,
+      I_min,I_max,
+      precision);
 
     EXPECT_MINIMIZE_RESULTS(poly_test);
     EXPECT_MINIMIZE_DER_RESULTS(poly_test);
   }
 }
 
-TEST(StdPolynomials, FloatRandomRootsOutRange) {
-  // ----- Float, roots out of interval ----- //
-  float precision_f = 1e-4f;
-  float r_min = -10.f;
-  float r_max =  10.f;
-  float I_min = -3.f;
-  float I_max =  3.f;
+TYPED_TEST(TestPolynomialByFloatType, RootsOutRange)
+{
+  typedef typename TypeParam::first_type T;
+  typedef typename TypeParam::second_type Policies;
 
-  for(unsigned short i = 0 ; i < TEST_SEED_COUNT ; i++)
+  size_t max_degree = TestFixture::get_max_degree();
+  T precision = TestFixture::get_precision();
+
+  constexpr T I_min = static_cast<T>(TEST_OUTER_I_MIN);
+  constexpr T I_max = static_cast<T>(TEST_OUTER_I_MAX);
+  constexpr T R_min = static_cast<T>(TEST_OUTER_R_MIN);
+  constexpr T R_max = static_cast<T>(TEST_OUTER_R_MAX);
+
+  static_assert(check_interval_inclusion(R_min,R_max,I_min,I_max));
+
+
+  for(auto i = 0; i < TEST_SEED_COUNT; i++)
   {
-    auto poly_test = generate_polynomial_test_case<float,OptimizationRounding::standard_rounding<float>,3>(
-      i, r_min, r_max, I_min, I_max, precision_f
-    );
+    auto poly_test = generate_polynomial_test_case<T,Policies>(i,max_degree,
+      R_min,R_max,
+      I_min,I_max,
+      precision);
 
     EXPECT_MINIMIZE_RESULTS(poly_test);
     EXPECT_MINIMIZE_DER_RESULTS(poly_test);
   }
-
 }
 
-TEST(StdPolynomials, DoubleRandomRootsInRange) {
-  // ----- Double, roots in interval ----- //
-
-  double precision_d = 1e-4;
-  double r_min_d = -1.;
-  double r_max_d =  1.;
-  double I_min_d = -10.;
-  double I_max_d =  10.;
-
-  for(unsigned short i = 0 ; i < TEST_SEED_COUNT ; i++)
-  {
-    auto poly_test = generate_polynomial_test_case<double,OptimizationRounding::standard_rounding<double>,3>(
-      i, r_min_d, r_max_d, I_min_d, I_max_d, precision_d
-    );
-
-    EXPECT_MINIMIZE_RESULTS(poly_test);    
-    EXPECT_MINIMIZE_DER_RESULTS(poly_test);
-  }
-}
-
-TEST(StdPolynomials, DoubleRandomRootsOutRange) {
-  // ----- Double, roots out of interval ----- //
-  double precision_d = 1e-4;
-  double r_min_d = -10.;
-  double r_max_d =  10.;
-  double I_min_d = -3.;
-  double I_max_d =  3.;
-
-  for(unsigned short i = 0 ; i < TEST_SEED_COUNT ; i++)
-  {
-    auto poly_test = generate_polynomial_test_case<double,OptimizationRounding::standard_rounding<double>,3>(
-      i, r_min_d, r_max_d, I_min_d, I_max_d, precision_d
-    );
-
-    EXPECT_MINIMIZE_RESULTS(poly_test);    
-    EXPECT_MINIMIZE_DER_RESULTS(poly_test);
-  }
-}
 
 
 

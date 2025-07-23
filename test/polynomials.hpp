@@ -8,89 +8,105 @@
 #include <boost/math/tools/polynomial.hpp>
 #include "testInterface.hpp"
 
-#include <array>
+#include <vector>
 #include <random>
 #include <initializer_list>
+#include <iostream>
 
-template<typename T, class Policies, unsigned short N>
+template<typename T, class Policies>
 class Polynomial : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
 {
 protected:
-    const std::array<T,N+1> coefs;
+    const std::vector<T> coefs;
 
 public:
-    static unsigned short degree() {return N;}
+    size_t degree() const {return coefs.size()-1;}
 
-    Polynomial(IntervalTesting::TestValues<T> vals, std::array<T,N+1> _coefs)
-    : IntervalTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) {}
+    Polynomial(IntervalTesting::TestValues<T> vals, std::vector<T> _coefs)
+    : IntervalTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
+    {
+        assert(_coefs.size() > 0);
+    }
+
+    Polynomial(IntervalTesting::TestValues<T> vals, std::initializer_list<T> _coefs)
+    : IntervalTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
+    {
+        assert(_coefs.size() > 0);
+    }
+
 
     pure T f(T t) const
     {
-        T output = coefs[N];
-        for(int i = N-1 ; i >= 0 ; i--)
+        T output = static_cast<T>(0);
+        for(size_t i = 0 ; i <= degree() ; i++)
         {
-            output = output*t+coefs[i];
+            output = output*t+coefs[degree() - i];
         }
         return output;
     }
 
     pure IntervalTesting::interval<T,Policies> F(const IntervalTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(coefs[N]);
-        for(int i = N-1 ; i >= 0 ; i--)
+        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        for(size_t i = 0 ; i <= degree() ; i++)
         {
-            output = output*I+coefs[i];
+            output = output*I+coefs[degree() - i];
         }
         return output;
     }
 
     pure T f_d(T t) const
     {
-        T output = N*coefs[N];
-        for(auto i = N-1 ; i >= 1 ; i--)
+        T output = static_cast<T>(0);
+        for(size_t i = 0 ; i <= degree()-1 ; i++)
         {
-            output = output*t+i*coefs[i];
+            size_t k = degree()-i;
+            output = output*t+k*coefs[k];
         }
         return output;
     }
 
     pure IntervalTesting::interval<T,Policies> F_d(const IntervalTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(N*coefs[N]);
-        for(auto i = N-1 ; i >= 1 ; i--)
+        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        for(size_t i = 0 ; i <= degree()-1 ; i++)
         {
-            output = output*I+i*coefs[i];
+            size_t k = degree()-i;
+            output = output*I+k*coefs[k];
         }
         return output;
     }
 
     pure T f_dd(T t) const
     {
-        T output = N*(N-1)*coefs[N];
-        for(auto i = N-1 ; i >= 2 ; i--)
+        T output = static_cast<T>(0);
+        for(size_t i = 0 ; i <= degree()-2 ; i++)
         {
-            output = output*t+i*(i-1)*coefs[i];
+            size_t k = degree()-i;
+            output = output*t+k*(k-1)*coefs[k];
         }
         return output;
     }
 
     pure IntervalTesting::interval<T,Policies> F_dd(const IntervalTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(N*(N-1)*coefs[N]);
-        for(auto i = N-1 ; i >= 2 ; i--)
+        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        for(size_t i = 0 ; i <= degree()-2 ; i++)
         {
-            output = output*I+i*(i-1)*coefs[i];
+            size_t k = degree()-i;
+            output = output*I+k*(k-1)*coefs[k];
         }
         return output;
     }
 
 };
 
-template<typename T, class Policies, unsigned short N>
-Polynomial<T,Policies,N> generate_polynomial_test_case(int seed, T r_min, T r_max, T I_min, T I_max, T precision)
+template<typename T, class Policies>
+Polynomial<T,Policies> generate_polynomial_test_case(int seed, size_t degree, T r_min, T r_max, T I_min, T I_max, T precision)
 {
     assert(r_min < r_max);
     assert(I_min < I_max);
+    assert(degree > 1);
 
     std::default_random_engine gen(seed); // Some seeded RNG 
     std::uniform_real_distribution<T> dis(r_min, r_max);
@@ -102,17 +118,33 @@ Polynomial<T,Policies,N> generate_polynomial_test_case(int seed, T r_min, T r_ma
     vals.init_right = I_max;
     vals.precision  = precision;
 
-    std::array<T,N-1> first_root;
-    poly_t first_de{{1.}};
+    std::vector<T> first_root;
+    poly_t first_de{{static_cast<T>(1)}};
 
-    for(size_t i = 0 ; i < first_root.size() ; i++)
+    for(size_t i = 0 ; i < degree-1 ; i++)
     {
-        first_root[i] = dis(gen);
-        first_de *= poly_t({-first_root[i],static_cast<T>(1)});
+        T root = dis(gen);
+        first_root.push_back(root);
+
+
+
+        poly_t root_poly = poly_t({-root,static_cast<T>(1)});
+        assert(abs(root_poly(root)) < precision);
+        first_de *= root_poly;
+
+        // std::cout   << "Root number n° " << i << std::endl
+        //             << "Root location: " << root << std::endl
+        //             << "Root value   : " << first_de(root) << std::endl << std::endl;
+
+        assert(abs(first_de(root)) < precision);
     }
 
     for(size_t i = 0 ; i < first_root.size() ; i++)
     {
+        // std::cout   << "Root number n° " << i << std::endl
+        //             << "Root location: " << first_root[i] << std::endl
+        //             << "Root value   : " << first_de(first_root[i]) << std::endl << std::endl;
+
         assert(abs(first_de(first_root[i])) < precision);
     }
     poly_t base_poly    = first_de.integrate() + poly_t({dis(gen)});
@@ -140,11 +172,5 @@ Polynomial<T,Policies,N> generate_polynomial_test_case(int seed, T r_min, T r_ma
         }
     }
 
-    std::array<T,N+1> coefs;
-    for(size_t i = 0 ; i < coefs.size() ; i++)
-    {
-        coefs[i] = base_poly.data()[i];
-    }
-
-    return Polynomial<T,Policies,N>(vals,coefs);
+    return Polynomial<T,Policies>(vals,base_poly.data());
 }

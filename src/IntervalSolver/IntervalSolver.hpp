@@ -10,8 +10,12 @@
 #include <functional>
 #include <optional>
 #include <utility>
-#include <iostream>
 
+#define DEBUG_STDOUT 1
+
+#if DEBUG_STDOUT >= 1
+#include <iostream>
+#endif
 
 #if DEBUG_VISUALISE >= 1
 
@@ -273,6 +277,13 @@ namespace IntervalSolver
             {
                 best = f_mid;
                 best_loc = x_mid;
+
+#if DEBUG_STDOUT >= 1
+                std::cout   << "Current estimate (location,value): ( " << best_loc << " , " << best << " )" << std::endl
+                            << "Processed interval  : [ " << X.lower() << " , " << X.upper() << " ]  (size: " << width(X) << " )" << std::endl
+                            << "Interval image      : [ " << F0.lower() << " , " << F0.upper() << " ]" << std::endl << std::endl;
+#endif
+
                 if (lower_bound.has_value())
                 {
                     if (abs(best-lower_bound.value()) < epsilon)
@@ -391,6 +402,14 @@ namespace IntervalSolver
             {
                 best = x_val;
                 best_loc = x_mid;
+
+#if DEBUG_STDOUT >= 1
+                std::cout   << "Current estimate (location,value): ( " << best_loc << " , " << best << " )" << std::endl
+                            << "Processed interval  : [ " << X.lower() << " , " << X.upper() << " ]  (size: " << width(X) << " )" << std::endl
+                            << "Interval image      : [ " << F0.lower() << " , " << F0.upper() << " ]" << std::endl << std::endl;
+#endif
+
+
                 if (lower_bound.has_value())
                 {
                     if (abs(best-lower_bound.value()) < epsilon)
@@ -416,9 +435,7 @@ namespace IntervalSolver
                 interval_list.push_back(i_high);
             }
             
-            // std::cout << "Current estimate (location,value): ( " << best_loc << " , " << best << " )" << std::endl;
-            // std::cout << "Processed interval: [ " << X.lower() << " , " << X.upper() << " ]  (size: " << width(X) << " )" << std::endl;
-
+            
             // Pop at the end to avoid killing the reference
             interval_list.pop_front();
 
