@@ -5,5 +5,5 @@
 
 configure_file(ProjectHeader.h.in ProjectHeader.h)
 
-# add_subdirectory(BrentSolver) #TODO : Write the Brent global solver
+add_subdirectory(BrentSolver)
 add_subdirectory(IntervalSolver)
