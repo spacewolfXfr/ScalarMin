@@ -54,7 +54,7 @@ namespace IntervalSolver
      * @tparam Policies : Policies for rounding and checking, from boost::numeric::interval
      * @param left          : Left side of the initial search interval
      * @param right         : Right side of the initial search interval
-     * @param f             : Function to optimize
+     * @param f             : Function to minimize
      * @param F             : The interval extension of f
      * @param f_d           : First derivative of f
      * @param F_d           : The interval extension of f_d  
@@ -88,7 +88,7 @@ namespace IntervalSolver
      * @tparam Policies : Policies for rounding and checking, from boost::numeric::interval
      * @param left          : Left side of the initial search interval
      * @param right         : Right side of the initial search interval
-     * @param f             : Function to optimize
+     * @param f             : Function to minimize
      * @param F             : The interval extension of f
      * @param epsilon       : The precision for the minimum location
      * @param lower_bound   : A lower bound on the local minimum (optional) 
