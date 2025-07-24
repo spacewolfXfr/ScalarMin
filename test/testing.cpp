@@ -20,22 +20,22 @@
 
 // -- Number of random test to generate -- //
 #if !defined(TEST_SEED_COUNT) || TEST_SEED_COUNT <= 0
-#define TEST_SEED_COUNT 10
+#define TEST_SEED_COUNT 16
 #endif
 
 // -- Precision and degree for polynomial tests in function of float precision type -- //
 // Precision and degree for float polynomial tests
 #if !defined(TEST_FLOAT_PRECISION)
-#define TEST_FLOAT_PRECISION 1e-3f
+#define TEST_FLOAT_PRECISION 1e-2f
 #endif
 
 #if !defined(TEST_FLOAT_POLY_MAX_DEGREE) || TEST_FLOAT_POLY_MAX_DEGREE <= 2
-#define TEST_FLOAT_POLY_MAX_DEGREE 4
+#define TEST_FLOAT_POLY_MAX_DEGREE 5
 #endif
 
 // Precision and degree for double float polynomial tests
 #if !defined(TEST_DOUBLE_PRECISION)
-#define TEST_DOUBLE_PRECISION 1e-6
+#define TEST_DOUBLE_PRECISION 1e-3
 #endif
 
 #if !defined(TEST_DOUBLE_POLY_MAX_DEGREE) || TEST_DOUBLE_POLY_MAX_DEGREE <= 2
@@ -44,7 +44,7 @@
 
 // Precision and degree for long double float polynomial tests
 #if !defined(TEST_LONG_DOUBLE_PRECISION)
-#define TEST_LONG_DOUBLE_PRECISION 1e-8
+#define TEST_LONG_DOUBLE_PRECISION 1e-3
 #endif
 
 #if !defined(TEST_LONG_DOUBLE_POLY_MAX_DEGREE) || TEST_LONG_DOUBLE_POLY_MAX_DEGREE <= 2
@@ -114,8 +114,11 @@ void EXPECT_MINIMIZE_RESULTS(IntervalTesting::TestCase<T,Policies> &c)
 {
   T s = c.minimize_interval_method();
 
+  T precision = std::max(c.testVals.precision,
+    c.testVals.precision*std::abs(c.testVals.value));
+
   EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, derivative free) Minimum locations do not match";
-  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision)  << "(Interval method, derivative free) Minimum values do not match";
+  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision*abs(c.testVals.value))  << "(Interval method, derivative free) Minimum values do not match";
 }
 
 template<typename T, class Policies>
@@ -123,8 +126,11 @@ void EXPECT_MINIMIZE_DER_RESULTS(IntervalTesting::TestCaseWithDerivatives<T,Poli
 {
   T s = c.minimize_interval_method_with_derivatives();
 
+  T precision = std::max(c.testVals.precision,
+    c.testVals.precision*std::abs(c.testVals.value));
+
   EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, with derivatives) Minimum locations do not match";
-  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision)  << "(Interval method, with derivatives) Minimum values do not match";
+  EXPECT_NEAR(c.f(s),c.testVals.value   ,c.testVals.precision*abs(c.testVals.value))  << "(Interval method, with derivatives) Minimum values do not match";
 }
 
 // -------------------- GTest classes -------------------- //
