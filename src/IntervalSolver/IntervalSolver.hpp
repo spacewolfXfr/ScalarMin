@@ -11,8 +11,6 @@
 #include <optional>
 #include <utility>
 
-#define DEBUG_STDOUT 1
-
 #if DEBUG_STDOUT >= 1
 #include <iostream>
 #endif
