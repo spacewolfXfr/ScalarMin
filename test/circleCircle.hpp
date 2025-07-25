@@ -10,7 +10,7 @@
 #include <cmath>
 
 template<typename T, class Policies>
-class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
+class CircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
 {
 
     private:
@@ -20,8 +20,21 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
         const T Dphi;
 
     public:
-        CircleCircle(IntervalTesting::TestValues<T> vals, T _Dx, T _Dy, T _r1, T _r2, T _w1, T _w2, T _Dphi)
-        : IntervalTesting::TestCase<T,Policies>(vals),
+        void print_params()
+        {
+            std::cout   << std::setprecision(5)
+                        << "Dx   : " << Dx      << std::endl
+                        << "Dy   : " << Dy      << std::endl
+                        << "r1   : " << r1      << std::endl
+                        << "w1   : " << w1      << std::endl
+                        << "r2   : " << r2      << std::endl
+                        << "w2   : " << w2      << std::endl
+                        << "Dphi : " << Dphi    << std::endl << std::endl; 
+            
+        }
+
+        CircleCircle(MinimizeTesting::TestValues<T> vals, T _Dx, T _Dy, T _r1, T _r2, T _w1, T _w2, T _Dphi)
+        : MinimizeTesting::TestCase<T,Policies>(vals),
              Dx(_Dx), Dy(_Dy), r1(_r1), r2(_r2), w1(_w1), w2(_w2), Dphi(_Dphi) {}
 
         pure T f(T t) const
@@ -31,7 +44,7 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
             return x*x + y*y;
         } 
 
-        pure IntervalTesting::interval<T,Policies> F(const IntervalTesting::interval<T,Policies> &I) const
+        pure MinimizeTesting::interval<T,Policies> F(const MinimizeTesting::interval<T,Policies> &I) const
         {
             using namespace boost::numeric;
 
@@ -57,7 +70,7 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
             return (x_d*x + y_d*y)*2;
         } 
 
-        pure IntervalTesting::interval<T,Policies> F_d(const IntervalTesting::interval<T,Policies> &I) const
+        pure MinimizeTesting::interval<T,Policies> F_d(const MinimizeTesting::interval<T,Policies> &I) const
         {
             using namespace boost::numeric;
 
@@ -95,7 +108,7 @@ class CircleCircle : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
             return (x_d*x_d+x*x_dd + y_d*y_d+y*y_dd)*2;
         } 
 
-        pure IntervalTesting::interval<T,Policies> F_dd(const IntervalTesting::interval<T,Policies> &I) const
+        pure MinimizeTesting::interval<T,Policies> F_dd(const MinimizeTesting::interval<T,Policies> &I) const
         {
             using namespace boost::numeric;
 

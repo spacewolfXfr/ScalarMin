@@ -6,7 +6,7 @@
 
 add_executable(ScalarMinTest testing.cpp)
 
-target_link_libraries(ScalarMinTest PUBLIC IntervalSolver GTest::gtest_main)
+target_link_libraries(ScalarMinTest PUBLIC IntervalSolver BrentSolver GTest::gtest_main)
 
 target_compile_options(ScalarMinTest PUBLIC
 "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused>>"

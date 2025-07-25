@@ -7,8 +7,10 @@
 #include <functional>
 #include <optional>
 #include <iostream>
+#include <iomanip>
 
 #include "IntervalSolver.hpp"
+#include "BrentSolver.hpp"
 
 
 // About these GCC attributes, symbolizing 'pure, mathematical functions': https://stackoverflow.com/questions/29117836/attribute-const-vs-attribute-pure-in-gnu-c
@@ -20,7 +22,7 @@
 // -------------------------------------------------- //
 // Testing setup
 
-namespace IntervalTesting
+namespace MinimizeTesting
 {
 
     using namespace IntervalSolver;
@@ -33,7 +35,9 @@ namespace IntervalTesting
         T init_left;    /// Lower bound of the initial research interval
         T init_right;   /// Upper bound of the initial research interval
         T precision;    /// Precision desired for the minimum location and value
-        std::optional<T> lower_bound = std::nullopt;    /// A known lower-bound on the global minimum
+        int bootstrap = 20;    /// Number of sampling points used to bootstrap the minimum evaluation
+        std::optional<T> lower_bound    = std::nullopt; /// A known lower-bound on the global minimum
+        std::optional<T> bound_M        = std::nullopt; /// A known absolute-bound on the second derivative
 
     };
 
@@ -45,6 +49,18 @@ namespace IntervalTesting
 
         struct TestValues<T> testVals;
         
+        void print_test_values()
+        {
+            std::cout   << std::setprecision(-std::log10(testVals.precision)-1);
+            std::cout   << "----- Test parameters -----" << std::endl
+                        << " Minimum location: "    << testVals.location    << std::endl
+                        << " Minimum value   : "    << testVals.value       << std::endl
+                        << " Search Interval : [ "  << testVals.init_left   << " , " << testVals.init_right << " ]" << std::endl
+                        << " Precision       : "    << testVals.precision   << std::endl
+                        << " Bootstrap       : "    << testVals.bootstrap   << std::endl << std::endl;
+        } 
+
+        virtual void print_params() = 0;
 
         void print_results(T loc)
         {
@@ -92,6 +108,19 @@ namespace IntervalTesting
                 testVals.precision,testVals.lower_bound
             );
         }
+
+        T minimize_brent_method(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            assert(testVals.bound_M.has_value());
+
+            return BrentSolver::minimize_brent<T>(testVals.init_left,testVals.init_right,
+                fbind,
+                testVals.bound_M.value(),
+                testVals.precision,
+                testVals.bootstrap);
+        }
+
     };
 
     template<typename T, class Policies>
@@ -123,6 +152,56 @@ namespace IntervalTesting
                 f_ddbind,F_ddbind,
                 this->testVals.precision,this->testVals.lower_bound
             );
+        }
+
+        T minimize_brent_method(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+
+            auto test = this->testVals;
+
+            T bound_M;
+            if (test.bound_M.has_value())
+            {
+                bound_M = test.bound_M.value();
+            }
+            else
+            {
+                auto M_interval = F_dd(interval<T,Policies>(test.init_left,test.init_right));
+                bound_M = std::max(std::abs(M_interval.lower()),std::abs(M_interval.upper()));
+            }
+
+            return BrentSolver::minimize_brent<T>(test.init_left,test.init_right,
+                fbind,
+                bound_M,
+                test.precision,
+                test.bootstrap);
+        }
+
+        T minimize_optbrent_method(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            auto f_dbind = [this](T x){return this->f_d(x);};
+
+            auto test = this->testVals;
+
+            T bound_M;
+            if (test.bound_M.has_value())
+            {
+                bound_M = test.bound_M.value();
+            }
+            else
+            {
+                auto M_interval = F_dd(interval<T,Policies>(test.init_left,test.init_right));
+                bound_M = std::max(std::abs(M_interval.lower()),std::abs(M_interval.upper()));
+            }
+
+            return BrentSolver::minimize_optbrent<T>(test.init_left,test.init_right,
+                fbind,
+                f_dbind,
+                bound_M,
+                test.precision,
+                test.bootstrap);
         }
     };
 }

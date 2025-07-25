@@ -14,22 +14,42 @@
 #include <iostream>
 
 template<typename T, class Policies>
-class Polynomial : public IntervalTesting::TestCaseWithDerivatives<T,Policies>
+class Polynomial : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
 {
 protected:
     const std::vector<T> coefs;
 
 public:
+    void print_params()
+    {
+        std::cout << "P(x) = " << std::setprecision(5);
+        size_t i = 0;
+        for (T c : coefs)
+        {
+            if (i > 0)
+            {
+                std::cout << " + " << c << " x^" << i;
+            }
+            else
+            {
+                std::cout << c;
+            }
+            
+            i++;
+        }
+        std::cout << std::endl << std::endl;
+    }
+
     size_t degree() const {return coefs.size()-1;}
 
-    Polynomial(IntervalTesting::TestValues<T> vals, std::vector<T> _coefs)
-    : IntervalTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
+    Polynomial(MinimizeTesting::TestValues<T> vals, std::vector<T> _coefs)
+    : MinimizeTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
     {
         assert(_coefs.size() > 0);
     }
 
-    Polynomial(IntervalTesting::TestValues<T> vals, std::initializer_list<T> _coefs)
-    : IntervalTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
+    Polynomial(MinimizeTesting::TestValues<T> vals, std::initializer_list<T> _coefs)
+    : MinimizeTesting::TestCaseWithDerivatives<T,Policies>(vals), coefs(_coefs) 
     {
         assert(_coefs.size() > 0);
     }
@@ -45,9 +65,9 @@ public:
         return output;
     }
 
-    pure IntervalTesting::interval<T,Policies> F(const IntervalTesting::interval<T,Policies> &I) const
+    pure MinimizeTesting::interval<T,Policies> F(const MinimizeTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        MinimizeTesting::interval<T,Policies> output(static_cast<T>(0));
         for(size_t i = 0 ; i <= degree() ; i++)
         {
             output = output*I+coefs[degree() - i];
@@ -66,9 +86,9 @@ public:
         return output;
     }
 
-    pure IntervalTesting::interval<T,Policies> F_d(const IntervalTesting::interval<T,Policies> &I) const
+    pure MinimizeTesting::interval<T,Policies> F_d(const MinimizeTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        MinimizeTesting::interval<T,Policies> output(static_cast<T>(0));
         for(size_t i = 0 ; i <= degree()-1 ; i++)
         {
             size_t k = degree()-i;
@@ -88,9 +108,9 @@ public:
         return output;
     }
 
-    pure IntervalTesting::interval<T,Policies> F_dd(const IntervalTesting::interval<T,Policies> &I) const
+    pure MinimizeTesting::interval<T,Policies> F_dd(const MinimizeTesting::interval<T,Policies> &I) const
     {
-        IntervalTesting::interval<T,Policies> output(static_cast<T>(0));
+        MinimizeTesting::interval<T,Policies> output(static_cast<T>(0));
         for(size_t i = 0 ; i <= degree()-2 ; i++)
         {
             size_t k = degree()-i;
@@ -113,7 +133,7 @@ Polynomial<T,Policies> generate_polynomial_test_case(int seed, size_t degree, T 
     
     typedef boost::math::tools::polynomial<T> poly_t;
 
-    IntervalTesting::TestValues<T> vals;
+    MinimizeTesting::TestValues<T> vals;
     vals.init_left  = I_min;
     vals.init_right = I_max;
     vals.precision  = precision;
