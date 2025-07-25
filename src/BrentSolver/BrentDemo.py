@@ -312,7 +312,6 @@ def minimize_optbrent(left:float, right:float,
             print(f"Step a: {step_a:.4f}\nf'(a)= {A2_d:.3f}")
         
         step_a = max(step_a,epsilon)
-
         
         if plotting:
             plt.plot(samples,f_samples,label=f"Objective function")
@@ -351,19 +350,33 @@ def minimize_optbrent(left:float, right:float,
             P_check = (A3 > best-epsilon)
 
 
+        step_a3 = np.sqrt((A2 - best + epsilon)/(0.5*M))
         if (P_check):
-            a2 = a3
-            step_abis = np.sqrt((A2 - best + epsilon)/(0.5*M))
-            if plotting:
-                print(f"Taylor step: {step_a:.3f}")
-                print(f"Brent  step: {step_abis:.3f}\n")
-                
-            step_a = max(step_a,step_abis)
-            a3 = a2 + step_a
+            step_astar = a3-a2
+            if step_astar > step_a:                
+                a2 = a3
+            else:
+                a2 += step_a
+            
+            a3 = a2 + step_a3
             A2 = f(a2)
             A2_d = f_d(a2)
         else:
-            a3 = (a2+a3)/2
+            step_astar = (a3-a2)/2
+            
+            if step_astar > step_a:    
+                a3 = (a2+a3)/2
+            else:
+                a2 += step_a
+                a3 = a2 + step_a3
+                A2 = f(a2)
+                A2_d = f_d(a2)
+                
+        if plotting:
+            print(f"Taylor step: {step_a:.3f}")
+            print(f"Brent  step: {step_astar:.3f}\n")
+        
+                
             
         iter_count += 1
 
@@ -386,18 +399,28 @@ def main():
     
     Dphi = np.pi/6
     
-    f   = lambda t : test_fun(Dx,Dy,r1,w1,r2,w2,Dphi,t)
-    f_d = lambda t : test_fun_d(Dx,Dy,r1,w1,r2,w2,Dphi,t)
-    M = test_fun_M(Dx,Dy,r1,w1,r2,w2,Dphi)
+    eps = 1e-3
+    a = -10
+    b =  10
     
-    eps = 1e-6
-    a = -5
-    b = 5
+    p = np.polynomial.Polynomial([0.374,34.2,786,-1.34e3,117,367,10.7,-31-3.06+0.751+0.1])
+    p_d = p.deriv(1)
+    
+    f   = p#lambda t : test_fun(Dx,Dy,r1,w1,r2,w2,Dphi,t)
+    f_d = p_d#lambda t : test_fun_d(Dx,Dy,r1,w1,r2,w2,Dphi,t)
+    # M = test_fun_M(Dx,Dy,r1,w1,r2,w2,Dphi)
     
     samples = np.arange(a,b,eps)
     f_samples = f(samples)
     s_min = np.argmin(f_samples)
     min_loc = samples[s_min]
+    
+    p_dd = p_d.deriv(1)
+    M = max(np.max(p_dd(samples)),-np.min(p_dd(samples)))
+    
+
+    
+    
     
     print("-- Start MyOpt --")
     min_solve = myopt(f,f_d,a,b,M,eps,plotting=False)

@@ -8,6 +8,10 @@
 #include <functional>
 #include <tuple>
 
+#if DEBUG_STDOUT >= 1
+#include <iostream>
+#endif
+
 namespace BrentSolver
 {
 
@@ -77,13 +81,16 @@ namespace BrentSolver
             best_loc    = p.first;
             best        = p.second;
         }
-          = left;
-        T best      = f(left);
-        
-        if (f(right) < best)
+        else
         {
-            best_loc = right;
-            best = f(right);
+            best_loc    = left;
+            best        = f(left);
+
+            if (f(right) < best)
+            {
+                best_loc = right;
+                best = f(right);
+            }
         }
 
         // For Concave function, solution is immediate
@@ -99,6 +106,14 @@ namespace BrentSolver
         T a3 = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
         while(a2 < right)
         {
+
+#if DEBUG_STDOUT >= 1
+            std::cout   << "a2: " << a2 << std::endl
+                        << "a3: " << a3 << std::endl
+                        << "best_loc : " << best_loc << std::endl
+                        << "best_val : " << best     << std::endl << std::endl;
+#endif
+
 
             T A3 = f(a3);
                         
@@ -185,13 +200,16 @@ namespace BrentSolver
             best_loc    = p.first;
             best        = p.second;
         }
-          = left;
-        T best      = f(left);
-        
-        if (f(right) < best)
+        else
         {
-            best_loc = right;
-            best = f(right);
+            best_loc    = left;
+            best        = f(left);
+
+            if (f(right) < best)
+            {
+                best_loc = right;
+                best = f(right);
+            }
         }
 
         // For Concave function, solution is immediate
@@ -200,14 +218,27 @@ namespace BrentSolver
             return best_loc;
         }
 
-        T a2 = left;
-        T A2 = f(a2);
+        T a2    = left;
+        T A2    = f(a2);
+        T A2_d  = f_d(a2);
 
         // Pick a3 in (a2,b]
-        T a3 = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
+        T a3    = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
         while(a2 < right)
         {
 
+#if DEBUG_STDOUT >= 1
+            std::cout   << "a2: " << a2 << std::endl
+                        << "a3: " << a3 << std::endl
+                        << "best_loc : " << best_loc << std::endl
+                        << "best_val : " << best     << std::endl << std::endl;
+#endif
+            // Shrink on left side using Taylor approximation
+            T Delta_a = A2_d*A2_d + 2*M*(A2-best);
+            T step_a = (A2_d + std::sqrt(Delta_a))/M;
+            step_a = std::max(step_a,epsilon);
+
+            // Compute the Brent interpolation point (and improve minimum estimation)
             T A3 = f(a3);
                         
             if (A3 < best)
@@ -240,17 +271,35 @@ namespace BrentSolver
                 P_check = (A3 > best-epsilon);
             }
 
-
+            T step_a3 = sqrt((A2 - best + epsilon)/(0.5*M));
+            T step_abrent;
             if (P_check)
             {
-                a2 = a3;
-                a3 = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
+                step_abrent = a3-a2;
+                a2 += std::max(step_a,step_abrent);
+                a3 = a2 + step_a3;
                 A2 = f(a2);
+                A2_d = f_d(a2);
             }
             else
             {
-                a3 = (a2+a3)/2;
+                step_abrent = (a3-a2)/2;
+                if (step_abrent > step_a)
+                {
+                    a3 = (a2+a3)/2;
+                }
+                else
+                {
+                    a2 += step_a;
+                    a3 = a2+step_a3;
+                    A2 = f(a2);
+                    A2_d = f_d(a2);
+                }
             }
+#if DEBUG_STDOUT >= 1
+            std::cout   << "Taylor step: " << step_a << std::endl
+                        << "Brent  step: " << step_abrent << std::endl << std::endl;
+#endif
 
         }
 
