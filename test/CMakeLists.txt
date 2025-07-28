@@ -4,21 +4,32 @@
 # https://opensource.org/licenses/MIT
 
 
-add_executable(ScalarMinTest testing.cpp)
-
-target_link_libraries(ScalarMinTest PUBLIC IntervalSolver BrentSolver GTest::gtest_main)
-
-target_compile_options(ScalarMinTest PUBLIC
-"$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused>>"
-"$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>"
-)
-
-target_include_directories(ScalarMinTest PUBLIC 
-                            "${PROJECT_SOURCE_DIR}"
-                            "${PROJECT_SOURCE_DIR}/src"
-                            "${PROJECT_SOURCE_DIR}/src/IntervalSolver"
-                            "${PROJECT_SOURCE_DIR}/src/BrentSolver"
-                            )
+#################### Test folder ####################
 
 include(GoogleTest)
-gtest_discover_tests(ScalarMinTest)
+
+macro(make_ScalarMin_test testName testFile)
+    add_executable(${testName} ${testFile})
+    target_link_libraries(${testName} PUBLIC IntervalSolver BrentSolver GTest::gtest_main)
+
+    target_compile_options(${testName} PUBLIC
+        "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused>>"
+        "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>"
+        )
+
+    target_include_directories(${testName} PUBLIC 
+                            "${PROJECT_SOURCE_DIR}"
+                            "${PROJECT_SOURCE_DIR}/src"
+                            )
+
+    gtest_discover_tests(${testName})
+endmacro()
+
+
+########## Tests on polynomial functions 
+
+make_ScalarMin_test(ScalarMinTestPolynomials PolynomialTesting.cpp)
+
+########## Tests on trigonometric functions 
+
+make_ScalarMin_test(ScalarMinTestCircles CirclesTesting.cpp)

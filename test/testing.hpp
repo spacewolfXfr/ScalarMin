@@ -6,15 +6,10 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include <array>
 #include <tuple>
-#include <vector>
-#include <concepts>
 
 #include "RoundingPolicies.hpp"
 #include "testInterface.hpp"
-#include "circleCircle.hpp"
-#include "polynomials.hpp"
 
 // -------------------- Configurable constants -------------------- //
 
@@ -24,148 +19,86 @@
 #define TEST_SEED_COUNT 24
 #endif
 
-// -- Precision and degree for polynomial tests in function of float precision type -- //
-// Precision and degree for float polynomial tests
+// -- Precision for tests as function of float subtype -- //
 #if !defined(TEST_FLOAT_PRECISION)
 #define TEST_FLOAT_PRECISION 1e-2f
 #endif
 
-#if !defined(TEST_FLOAT_POLY_MAX_DEGREE) || TEST_FLOAT_POLY_MAX_DEGREE <= 2
-#define TEST_FLOAT_POLY_MAX_DEGREE 5
-#endif
-
-// Precision and degree for double float polynomial tests
 #if !defined(TEST_DOUBLE_PRECISION)
 #define TEST_DOUBLE_PRECISION 1e-3
 #endif
 
-#if !defined(TEST_DOUBLE_POLY_MAX_DEGREE) || TEST_DOUBLE_POLY_MAX_DEGREE <= 2
-#define TEST_DOUBLE_POLY_MAX_DEGREE 10
-#endif
-
-// Precision and degree for long double float polynomial tests
 #if !defined(TEST_LONG_DOUBLE_PRECISION)
 #define TEST_LONG_DOUBLE_PRECISION 1e-3
 #endif
 
-#if !defined(TEST_LONG_DOUBLE_POLY_MAX_DEGREE) || TEST_LONG_DOUBLE_POLY_MAX_DEGREE <= 2
-#define TEST_LONG_DOUBLE_POLY_MAX_DEGREE 10
-#endif
 
-// -- Search intervals I and root generation intervals R -- //
-// Subcase R included in I
-#if !defined(TEST_INNER_I_MIN)
-#define TEST_INNER_I_MIN -10
-#endif
-
-#if !defined(TEST_INNER_I_MAX)
-#define TEST_INNER_I_MAX  10
-#endif
-
-#if !defined(TEST_INNER_R_MIN)
-#define TEST_INNER_R_MIN -5
-#endif
-
-#if !defined(TEST_INNER_R_MAX)
-#define TEST_INNER_R_MAX  5
-#endif
-
-// Subcase I included in R
-#if !defined(TEST_OUTER_I_MIN)
-#define TEST_OUTER_I_MIN -5
-#endif
-
-#if !defined(TEST_OUTER_I_MAX)
-#define TEST_OUTER_I_MAX  5
-#endif
-
-#if !defined(TEST_OUTER_R_MIN)
-#define TEST_OUTER_R_MIN -10
-#endif
-
-#if !defined(TEST_OUTER_R_MAX)
-#define TEST_OUTER_R_MAX  10
-#endif
-
-
-// -------------------- Helper functions -------------------- //
+// ==================== Helper functions ==================== //
 
 template<typename T>
-constexpr bool check_interval_nonempty(T l, T r)
+using Default_policies = OptimizationRounding::fast_rounding<T>;
+
+// ==================== GTest classes ==================== //
+
+template<typename _T, class _Policies=Default_policies<_T>>
+class GeneralTestByFloatType : public testing::Test
 {
-  return (l < r);
-}
+public:
+  GeneralTestByFloatType() {}
+protected:
+  static constexpr _T get_precision()
+  {
+    _T precision;
 
-template<typename T>
-constexpr bool check_interval_inclusion(T outer_l, T outer_r, T inner_l, T inner_r)
-{
-  check_interval_nonempty(outer_l,outer_r);
-  check_interval_nonempty(inner_l,inner_r);
+    if (std::is_same<_T, double>::value)
+    {
+      precision   = TEST_DOUBLE_PRECISION;
+    }
+    else if (std::is_same<_T, long double>::value)
+    {
+      precision   = TEST_LONG_DOUBLE_PRECISION;
+    }
+    else
+    {
+      precision   = TEST_FLOAT_PRECISION;
+    }
 
-  return (
-    (outer_l < inner_l) &&
-    (outer_l < inner_r) &&
-    (inner_l < outer_r) &&
-    (inner_r < outer_r)
-  );
-}
+    return precision;
+  }
 
-template<typename T, class Policies>
-void EXPECT_MINIMIZE_INTERVAL_RESULTS(MinimizeTesting::TestCase<T,Policies> &c)
-{
-  T s = c.minimize_interval_method();
+  virtual _T find_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) = 0;
+  virtual _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
+  {
+    return find_solution(c);
+  }
 
-  c.print_test_values();
-  c.print_params();
+  void test_and_check(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
+  {
+    _T s = find_solution(c);
 
-  T precision = std::max(c.testVals.precision,
-    c.testVals.precision*std::abs(c.testVals.value));
+    c.print_test_values();
+    c.print_params();
 
-    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "(Interval method, derivative free) Minimum values do not match";
-    ASSERT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, derivative free) Minimum locations do not match";
-}
+    _T precision = std::max(c.testVals.precision,
+      c.testVals.precision*std::abs(c.testVals.value));
 
-template<typename T, class Policies>
-void EXPECT_MINIMIZE_INTERVAL_DER_RESULTS(MinimizeTesting::TestCaseWithDerivatives<T,Policies> &c)
-{
-  T s = c.minimize_interval_method_with_derivatives();
+    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "Minimum values do not match";
+    EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "Minimum locations do not match";
+  }
 
-  c.print_test_values();
-  c.print_params();
+  void agreement_test(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
+  {
+    _T s1 = find_solution(c);
+    _T s2 = find_another_solution(c);
 
-  T precision = std::max(c.testVals.precision,
-    c.testVals.precision*std::abs(c.testVals.value));
+    _T v1 = c.f(s1);
+    _T v2 = c.f(s2);
 
-    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "(Interval method, with derivatives) Minimum values do not match";
-    ASSERT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Interval method, with derivatives) Minimum locations do not match";
-}
+    _T v_precision = std::max(c.testVals.precision,
+      std::min(c.testVals.precision*std::abs(v1), c.testVals.precision*std::abs(v2)));
 
-template<typename T, class Policies>
-void EXPECT_MINIMIZE_BRENT_RESULTS(MinimizeTesting::TestCaseWithDerivatives<T,Policies> &c)
-{
-  T s = c.minimize_brent_method();
+    EXPECT_NEAR(v1,v2, v_precision)           << "Minimum values do not match";
+    EXPECT_NEAR(s1,s2, c.testVals.precision)  << "Minimum locations do not match";
 
-  c.print_test_values();
-  c.print_params();
-
-  T precision = std::max(c.testVals.precision,
-    c.testVals.precision*std::abs(c.testVals.value));
-
-    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "(Brent method, derivatives-free) Minimum values do not match";
-    ASSERT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Brent method, derivatives-free) Minimum locations do not match";
-}
-
-template<typename T, class Policies>
-void EXPECT_MINIMIZE_BRENT_DER_RESULTS(MinimizeTesting::TestCaseWithDerivatives<T,Policies> &c)
-{
-  T s = c.minimize_optbrent_method();
-
-  c.print_test_values();
-  c.print_params();
-
-  T precision = std::max(c.testVals.precision,
-    c.testVals.precision*std::abs(c.testVals.value));
-
-    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "(Brent method, with derivatives) Minimum values do not match";
-    ASSERT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "(Brent method, with derivatives) Minimum locations do not match";
-}
+  }
+};

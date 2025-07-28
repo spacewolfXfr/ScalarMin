@@ -122,6 +122,48 @@ public:
 };
 
 template<typename T, class Policies>
+Polynomial<T,Policies> root_one_test_case(T precision)
+{
+const MinimizeTesting::TestValues<T> root_one_setup{
+     .location   = static_cast<T>(1.),
+     .value      = static_cast<T>(0.),
+     .init_left  = static_cast<T>(-10.),
+     .init_right = static_cast<T>( 10.),
+     .precision  = precision,
+   };
+
+  return Polynomial<T,Policies>(root_one_setup,{1,-2,1});
+}
+
+template<typename T, class Policies>
+Polynomial<T,Policies> right_edge_test_case(T precision)
+{
+const MinimizeTesting::TestValues<T> root_one_setup{
+     .location   = static_cast<T>(5.),
+     .value      = static_cast<T>(-148.),
+     .init_left  = static_cast<T>(-5.),
+     .init_right = static_cast<T>( 5.),
+     .precision  = precision,
+   };
+
+  return Polynomial<T,Policies>(root_one_setup,{2,5,3,-2});
+}
+
+template<typename T, class Policies>
+Polynomial<T,Policies> left_edge_test_case(T precision)
+{
+const MinimizeTesting::TestValues<T> root_one_setup{
+     .location   = static_cast<T>(-5.),
+     .value      = static_cast<T>(-51.),
+     .init_left  = static_cast<T>(-5.),
+     .init_right = static_cast<T>( 5.),
+     .precision  = precision,
+   };
+
+  return Polynomial<T,Policies>(root_one_setup,{3,4.3,-1.3});
+}
+
+template<typename T, class Policies>
 Polynomial<T,Policies> generate_polynomial_test_case(int seed, size_t degree, T r_min, T r_max, T I_min, T I_max, T precision)
 {
     assert(r_min < r_max);

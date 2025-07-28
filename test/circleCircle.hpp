@@ -8,6 +8,7 @@
 #include "testInterface.hpp"
 
 #include <cmath>
+#include <random>
 
 template<typename T, class Policies>
 class CircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
@@ -34,7 +35,7 @@ class CircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
         }
 
         CircleCircle(MinimizeTesting::TestValues<T> vals, T _Dx, T _Dy, T _r1, T _r2, T _w1, T _w2, T _Dphi)
-        : MinimizeTesting::TestCase<T,Policies>(vals),
+        : MinimizeTesting::TestCaseWithDerivatives<T,Policies>(vals),
              Dx(_Dx), Dy(_Dy), r1(_r1), r2(_r2), w1(_w1), w2(_w2), Dphi(_Dphi) {}
 
         pure T f(T t) const
@@ -85,7 +86,7 @@ class CircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
 
             interval<T,Policies> x_d_I = -w1*r1*s1 + w2*r2*s2;
             interval<T,Policies> y_d_I =  w1*r1*c1 - w2*r2*c2;
-            return (x_d_I*x_I + y_d_I*y_I)*2;
+            return (x_d_I*x_I + y_d_I*y_I)*static_cast<T>(2);
         }
 
         pure T f_dd(T t) const
@@ -127,7 +128,97 @@ class CircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
             interval<T,Policies> x_dd_I = -w1*w1*r1*c1 + w2*w2*r2*c2;
             interval<T,Policies> y_dd_I = -w1*w1*r1*s1 + w2*w2*r2*s2;
             
-            return (square(x_d_I)+x_I*x_dd_I + square(y_d_I)+y_I*y_dd_I)*2;
+            return (square(x_d_I)+x_I*x_dd_I + square(y_d_I)+y_I*y_dd_I)*static_cast<T>(2);
         }
 
 };
+
+template<typename T, class Policies>
+CircleCircle<T,Policies> circlecircle_easy_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = 0;
+    vals.init_right = 5;
+    vals.precision  = precision;
+    vals.location   = 4.12087;
+    vals.value      = 0.000722251;
+
+
+    return CircleCircle<T,Policies>(vals,
+        1,1,1,0.5,1,M_PI,0);
+
+}
+
+template<typename T, class Policies>
+CircleCircle<T,Policies> circlecircle_hard_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = -5;
+    vals.init_right = 5;
+    vals.precision  = precision;
+    vals.location   = 4.12087;
+    vals.value      = 0.000722251;
+
+
+    return CircleCircle<T,Policies>(vals,
+        1,1,1,0.5,1,M_PI,0);
+}
+
+/**
+ * @brief Generate a random test case for the Circle-circle distance function
+ * 
+ * @tparam T Float subtype (float,double, long double)
+ * @tparam Policies Rounding policies (relevant for Interval methods)
+ * @param seed  RNG seed
+ * @param speed Speed for the two vehicles moving on the circles. If non-positive, is picked randomly for each vehicle 
+ *  (they may be different!)
+ * @param I_min Start of the search interval
+ * @param I_max End of the search interval
+ * @param precision Required precision result 
+ * @return CircleCircle<T,Policies> A Circle-circle test case
+ */
+template<typename T, class Policies>
+CircleCircle<T,Policies> generate_circlecircle_test_case(int seed, T speed, T I_min, T I_max, T precision)
+{
+    std::default_random_engine gen(seed); // Some seeded RNG 
+    
+    T v1,v2;
+
+    if (speed > 0)
+    {
+        v1 = speed;
+        v2 = speed;
+    }
+    else
+    {
+        std::uniform_real_distribution<T> dis_speed(0.1, 10);
+        v1 = dis_speed(gen);
+        v2 = dis_speed(gen);
+    }
+
+    T Dphi; 
+    std::uniform_real_distribution<T> dis_dphi(-M_PI, M_PI);
+    Dphi = dis_dphi(gen);
+
+    T r1,r2,w1,w2;
+    std::uniform_real_distribution<T> dis_radius(0.1, 10);
+
+    r1 = dis_radius(gen);
+    r2 = dis_radius(gen);
+    w1 = v1/r1;
+    w2 = v2/r2;
+
+    T Dx,Dy;
+    Dx = dis_radius(gen);
+    Dy = dis_radius(gen);
+
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = I_min;
+    vals.init_right = I_max;
+    vals.precision  = precision;
+
+    vals.location   = NAN;
+    vals.value      = NAN;
+
+    return CircleCircle<T,Policies>(vals,Dx,Dy,r1,r2,w1,w2,Dphi);
+}
