@@ -106,6 +106,7 @@ namespace BrentSolver
         T a3 = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
         while(a2 < right)
         {
+            a3 = std::min(a3,right);
 
 #if DEBUG_STDOUT >= 1
             std::cout   << "a2: " << a2 << std::endl
@@ -226,6 +227,7 @@ namespace BrentSolver
         T a3    = a2 + sqrt((A2 - best + epsilon)/(0.5*M));
         while(a2 < right)
         {
+            a3 = std::min(a3,right);
 
 #if DEBUG_STDOUT >= 1
             std::cout   << "a2: " << a2 << std::endl
