@@ -21,3 +21,11 @@ add_library(IntervalSolver INTERFACE)
 target_sources(IntervalSolver INTERFACE IntervalSolver.hpp RoundingPolicies.hpp)
 
 target_link_libraries(IntervalSolver INTERFACE Boost::headers)
+
+
+#################### GLobal Library ####################
+
+add_library(ScalarMin INTERFACE)
+target_sources(ScalarMin INTERFACE BrentSolver.hpp IntervalSolver.hpp RoundingPolicies.hpp)
+
+target_link_libraries(ScalarMin INTERFACE Boost::headers)

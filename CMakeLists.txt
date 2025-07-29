@@ -40,7 +40,7 @@ if(VISUALISATON)
     target_compile_definitions(ScalarMinTest PUBLIC DEBUG_VISUALISE_SAMPLES 200)
 endif()
 
-option(TESTING "Include test, using GoogleTest" ON) # https://google.github.io/googletest/quickstart-cmake.html
+option(TESTING "Include test, using GoogleTest" OFF) # https://google.github.io/googletest/quickstart-cmake.html
 
 if(TESTING)
     include(FetchContent)
