@@ -403,20 +403,21 @@ def main():
     a = -10
     b =  10
     
-    p = np.polynomial.Polynomial([0.374,34.2,786,-1.34e3,117,367,10.7,-31-3.06+0.751+0.1])
-    p_d = p.deriv(1)
+    # p = np.polynomial.Polynomial([0.374,34.2,786,-1.34e3,117,367,10.7,-31-3.06+0.751+0.1])
+    # p_d = p.deriv(1)
+    # p_dd = p_d.deriv(1)
+    # M = max(np.max(p_dd(samples)),-np.min(p_dd(samples)))
     
-    f   = p#lambda t : test_fun(Dx,Dy,r1,w1,r2,w2,Dphi,t)
-    f_d = p_d#lambda t : test_fun_d(Dx,Dy,r1,w1,r2,w2,Dphi,t)
-    # M = test_fun_M(Dx,Dy,r1,w1,r2,w2,Dphi)
+    f   = lambda t : test_fun(Dx,Dy,r1,w1,r2,w2,Dphi,t)
+    f_d = lambda t : test_fun_d(Dx,Dy,r1,w1,r2,w2,Dphi,t)
+    M = test_fun_M(Dx,Dy,r1,w1,r2,w2,Dphi)
     
     samples = np.arange(a,b,eps)
     f_samples = f(samples)
     s_min = np.argmin(f_samples)
     min_loc = samples[s_min]
     
-    p_dd = p_d.deriv(1)
-    M = max(np.max(p_dd(samples)),-np.min(p_dd(samples)))
+ 
     
 
     
@@ -429,7 +430,7 @@ def main():
     min_brent = minimize_brent(a,b,f,M,eps,plotting=False)
     
     print("-- Start OptBrent --")
-    min_optbrent = minimize_optbrent(a,b,f,f_d,M,eps,plotting=False)
+    min_optbrent = minimize_optbrent(a,b,f,f_d,M,eps,plotting=True)
     
     print("\n---- Results -----\n")
     print(f"Sampling minimum at : {min_loc:.5f}")

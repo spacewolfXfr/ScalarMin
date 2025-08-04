@@ -75,8 +75,8 @@ class LineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
             interval<T,Policies> c1 = cos(w*I+phi);
             interval<T,Policies> s1 = sin(w*I+phi);
 
-            interval<T,Policies> x_I = Dx + r*c1 - t*vx;
-            interval<T,Policies> y_I = Dy + r*s1 - t*vy;
+            interval<T,Policies> x_I = Dx + r*c1 - I*vx;
+            interval<T,Policies> y_I = Dy + r*s1 - I*vy;
 
             interval<T,Policies> x_d_I = -w*r*s1 - vx;
             interval<T,Policies> y_d_I =  w*r*c1 - vy;
@@ -107,8 +107,8 @@ class LineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
             interval<T,Policies> c1 = cos(w*I+phi);
             interval<T,Policies> s1 = sin(w*I+phi);
 
-            interval<T,Policies> x_I = Dx + r*c1 - t*vx;
-            interval<T,Policies> y_I = Dy + r*s1 - t*vy;
+            interval<T,Policies> x_I = Dx + r*c1 - I*vx;
+            interval<T,Policies> y_I = Dy + r*s1 - I*vy;
 
             interval<T,Policies> x_d_I = -w*r*s1 - vx;
             interval<T,Policies> y_d_I =  w*r*c1 - vy;
@@ -121,36 +121,36 @@ class LineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
 
 };
 
-// template<typename T, class Policies>
-// LineCircle<T,Policies> linecircle_easy_special_case(T precision)
-// {
-//     MinimizeTesting::TestValues<T> vals;
-//     vals.init_left  = 0;
-//     vals.init_right = 5;
-//     vals.precision  = precision;
-//     vals.location   = 4.12087;
-//     vals.value      = 0.000722251;
+template<typename T, class Policies>
+LineCircle<T,Policies> linecircle_easy_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = 0;
+    vals.init_right = 5;
+    vals.precision  = precision;
+    vals.location   = 1.39796;
+    vals.value      = 0.237015;
 
 
-//     return LineCircle<T,Policies>(vals,
-//         1,1,1,0.5,M_PI,1.,1.);
+    return LineCircle<T,Policies>(vals,
+        1,1,1,M_PI,0.,0.4,-0.3);
 
-// }
+}
 
-// template<typename T, class Policies>
-// LineCircle<T,Policies> linecircle_hard_special_case(T precision)
-// {
-//     MinimizeTesting::TestValues<T> vals;
-//     vals.init_left  = -5;
-//     vals.init_right = 5;
-//     vals.precision  = precision;
-//     vals.location   = 4.12087;
-//     vals.value      = 0.000722251;
+template<typename T, class Policies>
+LineCircle<T,Policies> linecircle_hard_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = -5;
+    vals.init_right = 5;
+    vals.precision  = precision;
+    vals.location   = 1.39796;
+    vals.value      = 0.237015;
 
 
-//     return LineCircle<T,Policies>(vals,
-//         1,1,1,0.5,1,M_PI,0);
-// }
+    return LineCircle<T,Policies>(vals,
+        1,1,1,M_PI,0.,0.4,-0.3);
+}
 
 /**
  * @brief Generate a random test case for the Line-circle distance function
@@ -187,13 +187,13 @@ LineCircle<T,Policies> generate_linecircle_test_case(int seed, T speed, T I_min,
     T phi,alpha; 
     std::uniform_real_distribution<T> dis_phi(-M_PI, M_PI);
     phi     = dis_phi(gen);
-    alpha   = dis_phi(alpha);
+    alpha   = dis_phi(gen);
 
     T r,w;
     std::uniform_real_distribution<T> dis_radius(0.1, 10);
 
     r = dis_radius(gen);
-    w = v1/r1;
+    w = v1/r;
 
     T Dx,Dy;
     Dx = dis_radius(gen);

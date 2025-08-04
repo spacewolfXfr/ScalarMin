@@ -33,3 +33,4 @@ make_ScalarMin_test(ScalarMinTestPolynomials PolynomialTesting.cpp)
 ########## Tests on trigonometric functions 
 
 make_ScalarMin_test(ScalarMinTestCircles CirclesTesting.cpp)
+make_ScalarMin_test(ScalarMinTestLineCircle LineCircleTesting.cpp)
