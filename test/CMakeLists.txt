@@ -19,7 +19,7 @@ macro(make_ScalarMin_test testName testFile)
 
     target_include_directories(${testName} PUBLIC 
                             "${PROJECT_SOURCE_DIR}"
-                            "${PROJECT_SOURCE_DIR}/src"
+                            "${PROJECT_SOURCE_DIR}/ScalarMin"
                             )
 
     gtest_discover_tests(${testName})

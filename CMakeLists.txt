@@ -19,7 +19,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # -------------------- Targets -------------------- #
 
-add_subdirectory(src)
+add_subdirectory(ScalarMin)
 
 
 # # If we need accurate rounding: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-frounding-math
