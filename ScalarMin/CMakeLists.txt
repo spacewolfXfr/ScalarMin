@@ -15,7 +15,7 @@ target_sources(BrentSolver INTERFACE BrentSolver.hpp)
 
 #################### Interval Solver ####################
 
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 
 add_library(IntervalSolver INTERFACE)
 target_sources(IntervalSolver INTERFACE IntervalSolver.hpp RoundingPolicies.hpp)

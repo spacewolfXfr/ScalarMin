@@ -1,5 +1,5 @@
 # CMake general configuration
-cmake_minimum_required(VERSION 3.30.0)
+cmake_minimum_required(VERSION 3.28.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_DEBUG_POSTFIX d)
 
@@ -13,7 +13,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -33,16 +33,16 @@ set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 
 # -------------------- Testing -------------------- #
 
-option(VISUALISATION "Include visualisation in the solver (for debug/demo purpose)" OFF)
+option(SCALARMIN_VISUALISATION "Include visualisation in the solver (for debug/demo purpose)" OFF)
 
-if(VISUALISATON)
+if(SCALARMIN_VISUALISATON)
     target_compile_definitions(ScalarMinTest PUBLIC DEBUG_VISUALISE 1)
     target_compile_definitions(ScalarMinTest PUBLIC DEBUG_VISUALISE_SAMPLES 200)
 endif()
 
-option(TESTING "Include test, using GoogleTest" OFF) # https://google.github.io/googletest/quickstart-cmake.html
+option(SCALARMIN_TESTING "Include test, using GoogleTest" OFF) # https://google.github.io/googletest/quickstart-cmake.html
 
-if(TESTING)
+if(SCALARMIN_TESTING)
     include(FetchContent)
     FetchContent_Declare(
         googletest
@@ -59,11 +59,11 @@ if(TESTING)
     add_subdirectory(test)
 endif()
 
-if(BENCHMARK)
-    include(FetchContent)
-    FetchContent_Declare(
-        googlebench
-        GIT_REPOSITORY https://github.com/google/benchmark.git
-        GIT_TAG        eddb0241389718a23a42db6af5f0164b6e0139af # release-1.9.4
-        )
-endif()
+# if(BENCHMARK)
+#     include(FetchContent)
+#     FetchContent_Declare(
+#         googlebench
+#         GIT_REPOSITORY https://github.com/google/benchmark.git
+#         GIT_TAG        eddb0241389718a23a42db6af5f0164b6e0139af # release-1.9.4
+#         )
+# endif()
