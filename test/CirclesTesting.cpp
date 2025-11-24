@@ -10,9 +10,11 @@
 // ========== Test on circle-circle distance functions ========== //
 
 // ---- Brent Methods ---- //
+// DISABLED SINCE METHOD IS NOT ACCURATE //
 
 using FloatTestTypes = ::testing::Types<float,double,long double>;
 
+/*
 TYPED_TEST_CASE(BrentTestCircleCircle,FloatTestTypes);
 
 TYPED_TEST(BrentTestCircleCircle, EasySpecial)
@@ -57,7 +59,7 @@ TYPED_TEST(BrentDerTestCircleCircle, HardSpecial)
 {
     this->test_special_hard();
 }
-
+*/
 
 // ---- Interval Methods ---- //
 

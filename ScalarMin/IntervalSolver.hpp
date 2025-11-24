@@ -71,6 +71,7 @@ namespace IntervalSolver
         std::function<T(const T&)> f_dd,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F_dd,
         T epsilon,
+        std::optional<T> hot_start   = std::nullopt,
         std::optional<T> lower_bound = std::nullopt
     );
 
@@ -97,6 +98,7 @@ namespace IntervalSolver
         std::function<T(const T&)> f,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F,
         T epsilon,
+        std::optional<T> hot_start   = std::nullopt,
         std::optional<T> lower_bound = std::nullopt
     );
 
@@ -202,6 +204,7 @@ namespace IntervalSolver
         std::function<T(const T&)> f_dd,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F_dd,
         T epsilon,
+        std::optional<T> hot_start  ,
         std::optional<T> lower_bound
     )
     {
@@ -212,13 +215,10 @@ namespace IntervalSolver
 #endif
 
         typedef interval<T, Policies> inteval_t;
-        // 1.
-        assert(left < right);
-        interval<T, Policies> X0(left,right);
-        std::list<inteval_t> interval_list;
-        interval_list.push_back(X0);
 
-        // 2.
+        std::list<inteval_t> interval_list;
+        
+        // 2. Initialize minimum estimate
         T best_loc = left;
         T best = f(left);
         
@@ -228,7 +228,30 @@ namespace IntervalSolver
             best_loc = right;
         }
 
+        // 1. Initialize search list (and additional inital value)
+        assert(left < right);
+
+        if (hot_start.has_value())
         {
+            T hloc = hot_start.value();
+            assert(left <= hloc && hloc <= right);
+            interval<T, Policies> X0l(left,hloc);
+            interval<T, Policies> X0r(hloc,right);
+
+            interval_list.push_back(X0l);
+            interval_list.push_back(X0r);
+
+            if (f(hloc) < best)
+            {
+                best = f(hloc);
+                best_loc = hloc;
+            }
+        }
+        else
+        {
+            interval<T, Policies> X0(left,right);
+            interval_list.push_back(X0);
+            
             T mid = median(X0);
             if (f(mid) < best)
             {
@@ -326,6 +349,7 @@ namespace IntervalSolver
         std::function<T(const T&)> f,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F,
         T epsilon,
+        std::optional<T> hot_start  ,
         std::optional<T> lower_bound
     )
     {
@@ -336,12 +360,8 @@ namespace IntervalSolver
         
         typedef interval<T, Policies> inteval_t;
 
-        // 1. Initialize search list
-        assert(left < right);
-        inteval_t X0(left,right);
         std::list<inteval_t> interval_list;
-        interval_list.push_back(X0);
-
+        
         // 2. Initialize minimum estimate
         T best_loc = left;
         T best = f(left);
@@ -352,7 +372,30 @@ namespace IntervalSolver
             best_loc = right;
         }
 
+        // 1. Initialize search list (and additional inital value)
+        assert(left < right);
+
+        if (hot_start.has_value())
         {
+            T hloc = hot_start.value();
+            assert(left <= hloc && hloc <= right);
+            interval<T, Policies> X0l(left,hloc);
+            interval<T, Policies> X0r(hloc,right);
+
+            interval_list.push_back(X0l);
+            interval_list.push_back(X0r);
+
+            if (f(hloc) < best)
+            {
+                best = f(hloc);
+                best_loc = hloc;
+            }
+        }
+        else
+        {
+            interval<T, Policies> X0(left,right);
+            interval_list.push_back(X0);
+            
             T mid = median(X0);
             if (f(mid) < best)
             {

@@ -12,6 +12,8 @@
 #include <iostream>
 #endif
 
+#warning "Using Brent Global Solver; this implementation is inaccurate!"
+
 namespace BrentSolver
 {
 
@@ -72,6 +74,8 @@ namespace BrentSolver
         T M, T epsilon, int bootstrap=0
     )
     {
+        epsilon /= 2;
+
         assert(right > left);
 
         T best_loc,best;
@@ -192,6 +196,8 @@ namespace BrentSolver
         T M, T epsilon, int bootstrap=0
     )
     {
+        epsilon /= 2;
+
         assert(right > left);
         
         T best_loc,best;

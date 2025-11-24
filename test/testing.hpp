@@ -29,7 +29,7 @@
 #endif
 
 #if !defined(TEST_LONG_DOUBLE_PRECISION)
-#define TEST_LONG_DOUBLE_PRECISION 1e-3
+#define TEST_LONG_DOUBLE_PRECISION 1e-5
 #endif
 
 

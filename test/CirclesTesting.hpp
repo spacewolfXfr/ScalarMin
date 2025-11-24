@@ -161,7 +161,8 @@ protected:
 
   _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
-    return c.minimize_brent_method();
+    //return c.minimize_brent_method();
+    return c.minimize_naive();
   }
 };
 
@@ -176,7 +177,8 @@ protected:
 
   _T find_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
-    return c.minimize_optbrent_method();
+    // return c.minimize_optbrent_method();
+    return c.minimize_naive();
   }
 
   _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override

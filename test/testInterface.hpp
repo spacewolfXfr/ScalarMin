@@ -203,5 +203,19 @@ namespace MinimizeTesting
                 test.precision,
                 test.bootstrap);
         }
+
+        T minimize_naive(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+
+            auto test = this->testVals;
+
+            auto res = BrentSolver::sample_minimize<T>(test.init_left,test.init_right,
+                fbind,
+                static_cast<int>((test.init_right-test.init_left)/test.precision)+2
+            );
+
+            return std::get<0>(res);
+        }
     };
 }

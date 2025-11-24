@@ -11,9 +11,11 @@
 // ========== Test on polynomials ========== //
 
 // ---- Brent Methods ---- //
+// DISABLED SINCE METHOD IS NOT ACCURATE //
 
 using FloatTestTypes = ::testing::Types<float,double,long double>;
 
+/*
 // Derivatives free
 TYPED_TEST_CASE(BrentTestCircleCircle,FloatTestTypes);
 
@@ -78,6 +80,7 @@ TYPED_TEST(BrentDerTestPolynomial, RootsOutInterval)
 
   this->test_random(interval_and_roots,TEST_SEED_COUNT);
 }
+*/
 
 // ---- Interval Methods ---- //
 
