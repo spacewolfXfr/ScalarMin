@@ -41,12 +41,14 @@ protected:
     {
         CircleCircle<_T,_Policies> test = circlecircle_easy_special_case<_T,_Policies>(this->get_precision());
         this->test_and_check(test);
+        this->test_and_check_bis(test);
     }
 
     void test_special_hard()
     {
         CircleCircle<_T,_Policies> test = circlecircle_hard_special_case<_T,_Policies>(this->get_precision());
         this->test_and_check(test);
+        this->test_and_check_bis(test);
     }
 
     void test_random(_T speed, _T I_min, _T I_max, int sample_num)
@@ -120,7 +122,14 @@ protected:
 
   _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
-    return c.minimize_interval_method_with_derivatives();
+    if (c.testVals.hotstart.has_value())
+    {
+      return c.minimize_interval_method_with_hotstart();
+    }
+    else
+    {
+      return c.minimize_interval_method_with_derivatives();
+    }
   }
 };
 
@@ -140,7 +149,14 @@ protected:
 
   _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
-    return c.minimize_interval_method();
+    if (c.testVals.hotstart.has_value())
+    {
+      return c.minimize_interval_method_with_derivatives_and_hotstart();
+    }
+    else
+    {
+      return c.minimize_interval_method();
+    }
   }
 };
 

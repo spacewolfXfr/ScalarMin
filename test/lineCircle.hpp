@@ -130,6 +130,7 @@ LineCircle<T,Policies> linecircle_easy_special_case(T precision)
     vals.precision  = precision;
     vals.location   = 1.39796;
     vals.value      = 0.237015;
+    vals.hotstart   = 1.;
 
 
     return LineCircle<T,Policies>(vals,
@@ -146,6 +147,7 @@ LineCircle<T,Policies> linecircle_hard_special_case(T precision)
     vals.precision  = precision;
     vals.location   = 1.39796;
     vals.value      = 0.237015;
+    vals.hotstart   = -2.;
 
 
     return LineCircle<T,Policies>(vals,

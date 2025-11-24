@@ -95,31 +95,31 @@ using PairedTestTypes = ::testing::Types<
   >;
 
 // Derivatives free
-TYPED_TEST_CASE(IntervalTestCircleCircle,PairedTestTypes);
+TYPED_TEST_CASE(IntervalTestTestPolynomial,PairedTestTypes);
 
-TYPED_TEST(IntervalTestCircleCircle,RootOne)
+TYPED_TEST(IntervalTestTestPolynomial,RootOne)
 {
   this->test_root_one();
 }
 
-TYPED_TEST(IntervalTestCircleCircle,RightEdge)
+TYPED_TEST(IntervalTestTestPolynomial,RightEdge)
 {
   this->test_right_edge();
 }
 
-TYPED_TEST(IntervalTestCircleCircle,LeftEdge)
+TYPED_TEST(IntervalTestTestPolynomial,LeftEdge)
 {
   this->test_left_edge();
 }
 
-TYPED_TEST(IntervalTestCircleCircle, RootsInInterval)
+TYPED_TEST(IntervalTestTestPolynomial, RootsInInterval)
 {
   auto interval_and_roots = TestFixture::roots_in_interval();
 
   this->test_random(interval_and_roots,TEST_SEED_COUNT);
 }
 
-TYPED_TEST(IntervalTestCircleCircle, RootsOutInterval)
+TYPED_TEST(IntervalTestTestPolynomial, RootsOutInterval)
 {
   auto interval_and_roots = TestFixture::roots_out_interval();
 

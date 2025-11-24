@@ -130,6 +130,7 @@ const MinimizeTesting::TestValues<T> root_one_setup{
      .init_left  = static_cast<T>(-10.),
      .init_right = static_cast<T>( 10.),
      .precision  = precision,
+     .hotstart   = static_cast<T>(0.)
    };
 
   return Polynomial<T,Policies>(root_one_setup,{1,-2,1});
@@ -144,6 +145,7 @@ const MinimizeTesting::TestValues<T> root_one_setup{
      .init_left  = static_cast<T>(-5.),
      .init_right = static_cast<T>( 5.),
      .precision  = precision,
+     .hotstart   = static_cast<T>(-2)
    };
 
   return Polynomial<T,Policies>(root_one_setup,{2,5,3,-2});
@@ -158,6 +160,7 @@ const MinimizeTesting::TestValues<T> root_one_setup{
      .init_left  = static_cast<T>(-5.),
      .init_right = static_cast<T>( 5.),
      .precision  = precision,
+     .hotstart   = static_cast<T>(1)
    };
 
   return Polynomial<T,Policies>(root_one_setup,{3,4.3,-1.3});

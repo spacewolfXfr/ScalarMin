@@ -38,6 +38,7 @@ namespace MinimizeTesting
         int bootstrap = 20;    /// Number of sampling points used to bootstrap the minimum evaluation
         std::optional<T> lower_bound    = std::nullopt; /// A known lower-bound on the global minimum
         std::optional<T> bound_M        = std::nullopt; /// A known absolute-bound on the second derivative
+        std::optional<T> hotstart       = std::nullopt; /// A location for kitstarting the solver
 
     };
 
@@ -105,7 +106,25 @@ namespace MinimizeTesting
             return IntervalSolver::minimize_interval_method<T,Policies>(
                 testVals.init_left,testVals.init_right,
                 fbind,Fbind,
-                testVals.precision,testVals.lower_bound
+                testVals.precision,
+                std::nullopt,
+                testVals.lower_bound
+            );
+        }
+
+        T minimize_interval_method_with_hotstart(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            auto Fbind = [this](const interval<T,Policies> &I){return this->F(I);};
+
+            EXPECT_TRUE(testVals.hotstart.has_value());
+
+            return IntervalSolver::minimize_interval_method<T,Policies>(
+                testVals.init_left,testVals.init_right,
+                fbind,Fbind,
+                testVals.precision,
+                testVals.hotstart,
+                testVals.lower_bound
             );
         }
 
@@ -150,7 +169,33 @@ namespace MinimizeTesting
                 fbind,Fbind,
                 f_dbind,F_dbind,
                 f_ddbind,F_ddbind,
-                this->testVals.precision,this->testVals.lower_bound
+                this->testVals.precision,
+                std::nullopt,
+                this->testVals.lower_bound
+            );
+        }
+
+        T minimize_interval_method_with_derivatives_and_hotstart(void)
+        {
+            auto fbind = [this](T x){return this->f(x);};
+            auto Fbind = [this](const interval<T,Policies> &I){return this->F(I);};
+
+            auto f_dbind = [this](T x){return this->f_d(x);};
+            auto F_dbind = [this](const interval<T,Policies> &I){return this->F_d(I);};
+
+            auto f_ddbind = [this](T x){return this->f_dd(x);};
+            auto F_ddbind = [this](const interval<T,Policies> &I){return this->F_dd(I);};
+
+            EXPECT_TRUE(this->testVals.hotstart.has_value());
+            
+            return IntervalSolver::minimize_interval_method<T,Policies>(
+                this->testVals.init_left,this->testVals.init_right,
+                fbind,Fbind,
+                f_dbind,F_dbind,
+                f_ddbind,F_ddbind,
+                this->testVals.precision,
+                this->testVals.hotstart,
+                this->testVals.lower_bound
             );
         }
 

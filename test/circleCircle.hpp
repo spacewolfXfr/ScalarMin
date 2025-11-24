@@ -142,6 +142,7 @@ CircleCircle<T,Policies> circlecircle_easy_special_case(T precision)
     vals.precision  = precision;
     vals.location   = 4.12087;
     vals.value      = 0.000722251;
+    vals.hotstart   = 4.2;
 
 
     return CircleCircle<T,Policies>(vals,
@@ -158,6 +159,7 @@ CircleCircle<T,Policies> circlecircle_hard_special_case(T precision)
     vals.precision  = precision;
     vals.location   = 4.12087;
     vals.value      = 0.000722251;
+    vals.hotstart   = -1;
 
 
     return CircleCircle<T,Policies>(vals,

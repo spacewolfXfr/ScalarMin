@@ -69,12 +69,27 @@ protected:
   virtual _T find_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) = 0;
   virtual _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
   {
+    std::cerr << "WARNING: No alternative solving method provided" << std::endl;
     return find_solution(c);
   }
 
   void test_and_check(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
   {
     _T s = find_solution(c);
+
+    c.print_test_values();
+    c.print_params();
+
+    _T precision = std::max(c.testVals.precision,
+      c.testVals.precision*std::abs(c.testVals.value));
+
+    EXPECT_NEAR(c.f(s),c.testVals.value   ,precision)             << "Minimum values do not match";
+    EXPECT_NEAR(s     ,c.testVals.location,c.testVals.precision)  << "Minimum locations do not match";
+  }
+
+  void test_and_check_bis(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c)
+  {
+    _T s = find_another_solution(c);
 
     c.print_test_values();
     c.print_params();

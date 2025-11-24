@@ -59,6 +59,7 @@ namespace IntervalSolver
      * @param f_dd          : Second derivative of f
      * @param F_dd          : The interval extension of f_dd 
      * @param epsilon       : The precision for the minimum location
+     * @param hot_start     : A guess for the minimum location (optional)
      * @param lower_bound   : A lower bound on the local minimum (optional) 
      * @return T        : The global minimum value of f on [left,right]
      */
@@ -90,6 +91,7 @@ namespace IntervalSolver
      * @param f             : Function to minimize
      * @param F             : The interval extension of f
      * @param epsilon       : The precision for the minimum location
+     * @param hot_start     : A guess for the minimum location (optional)
      * @param lower_bound   : A lower bound on the local minimum (optional) 
      * @return T        : The global minimum value of f on [left,right]
      */

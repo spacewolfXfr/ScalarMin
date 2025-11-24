@@ -140,6 +140,7 @@ protected:
     Polynomial<_T,_Policies> testcase = root_one_test_case<_T,_Policies>(TestPolynomial<_T,_Policies>::get_precision());
 
     this->test_and_check(testcase);
+    this->test_and_check_bis(testcase);
   }
 
   void test_right_edge()
@@ -147,6 +148,7 @@ protected:
     Polynomial<_T,_Policies> testcase = right_edge_test_case<_T,_Policies>(TestPolynomial<_T,_Policies>::get_precision());
 
     this->test_and_check(testcase);
+    this->test_and_check_bis(testcase);
   }
 
   void test_left_edge()
@@ -154,6 +156,7 @@ protected:
     Polynomial<_T,_Policies> testcase = left_edge_test_case<_T,_Policies>(TestPolynomial<_T,_Policies>::get_precision());
 
     this->test_and_check(testcase);
+    this->test_and_check_bis(testcase);
   }
 
   void test_random(const std::tuple<_T,_T,_T,_T>& search_and_roots_intervals, int sample_num)
@@ -210,10 +213,10 @@ protected:
 // Using paired types to test accross two kinds of types:
 // https://stackoverflow.com/questions/52256953/c-multiple-parameters-with-gtest-typed-test
 template<typename PairedType = std::pair<float,OptimizationRounding::standard_rounding<float>>>
-class IntervalTestCircleCircle : public TestPolynomial<typename PairedType::first_type, typename PairedType::second_type>
+class IntervalTestTestPolynomial : public TestPolynomial<typename PairedType::first_type, typename PairedType::second_type>
 {
 public:
-  IntervalTestCircleCircle() {}
+  IntervalTestTestPolynomial() {}
 protected: 
   typedef typename PairedType::first_type _T;
   typedef typename PairedType::second_type _Policies;
@@ -221,6 +224,18 @@ protected:
   _T find_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
     return c.minimize_interval_method();
+  }
+
+  _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
+  {
+    if (c.testVals.hotstart.has_value())
+    {
+      return c.minimize_interval_method_with_hotstart();
+    }
+    else
+    {
+      return c.minimize_interval_method_with_derivatives();
+    }
   }
 };
 
@@ -236,5 +251,17 @@ protected:
   _T find_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
   {
     return c.minimize_interval_method_with_derivatives();
+  }
+
+  _T find_another_solution(MinimizeTesting::TestCaseWithDerivatives<_T,_Policies> &c) override
+  {
+    if (c.testVals.hotstart.has_value())
+    {
+      return c.minimize_interval_method_with_derivatives_and_hotstart();
+    }
+    else
+    {
+      return c.minimize_interval_method();
+    }
   }
 };
