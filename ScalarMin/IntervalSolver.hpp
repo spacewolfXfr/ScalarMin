@@ -10,6 +10,7 @@
 #include <functional>
 #include <optional>
 #include <utility>
+#include <array>
 
 #if DEBUG_STDOUT >= 1
 #include <iostream>
@@ -107,20 +108,26 @@ namespace IntervalSolver
     // ----- Template implementations ----- //
 
     template<typename T, class Policies>
-    std::pair<std::optional<interval<T, Policies>>,std::optional<interval<T, Policies>>> interval_reduction(interval<T, Policies> &X0,
+    std::array<interval<T, Policies>,4> interval_reduction(interval<T, Policies> &X0,
         BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f,
         BOOST_ATTRIBUTE_UNUSED std::function<interval<T, Policies>(const interval<T, Policies>&)> F,
         BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f_d,
         BOOST_ATTRIBUTE_UNUSED std::function<interval<T, Policies>(const interval<T, Policies>&)> F_d,
         BOOST_ATTRIBUTE_UNUSED std::function<T(const T&)> f_dd,
         std::function<interval<T, Policies>(const interval<T, Policies>&)> F_dd,
-        T x, T f_x, T f_d_x, T best_value
+        T x, T f_x, T f_d_x, T best_value, T zero_tol=1e-30
     )
     {
-        auto nullopt = std::nullopt;
-        typedef interval<T, Policies> inteval_t;
+        typedef interval<T, Policies> interval_t;
+
+        std::array<interval_t,4> output{
+            interval_t::empty(),
+            interval_t::empty(),
+            interval_t::empty(),
+            interval_t::empty()
+        };
         
-        inteval_t dd_interval = F_dd(X0);
+        interval_t dd_interval = F_dd(X0);
         T u = dd_interval.lower();
         T v = dd_interval.upper();
 
@@ -128,8 +135,69 @@ namespace IntervalSolver
         // Concavity argument: if v < 0, then f is concave on X0, and as such cannot contain a minimum
         if (v < 0)
         {
-            return std::pair(nullopt,nullopt);
+            return output;
         }
+
+        // Part 6.
+        // Newton's step
+        interval_t S1;
+        interval_t S2;
+
+        if (u > 0)
+        {
+            S1 = x - f_d_x/dd_interval;
+            S2 = interval_t::empty();
+        }
+        else
+        {
+            S1 = interval_t::empty();
+            S2 = interval_t::empty();
+
+            if (f_d_x >= 0)
+            {
+                if (v > 0)
+                {
+                    T d = x - f_d_x/v;
+                    if (d >= X0.lower())
+                    {
+                        S1 = interval_t(X0.lower(),d);
+                    }
+                }
+
+                if (u < 0)
+                {
+                    T c = x - f_d_x/u;
+                    if (c <= X0.upper())
+                    {
+                        S2 = interval_t(c,X0.upper());
+                    }
+                }
+            }
+            else
+            {
+                if (u < 0)
+                {
+                    T c = x - f_d_x/u;
+                    if (c >= X0.lower())
+                    {
+                        S1 = interval_t(X0.lower(),c);
+                    }
+                }
+
+                if (v > 0)
+                {
+                    T d = x - f_d_x/v;
+                    if (d <= X0.upper())
+                    {
+                        S2 = interval_t(d,X0.upper());
+                    }
+                }
+            }
+
+        }
+
+        interval_t Xs1 = intersect(X0,S1);
+        interval_t Xs2 = intersect(X0,S2);
 
         // Part 7.
         // Using Taylor expension, we get rid of values y in X0 such that f(y) >= best_value
@@ -145,26 +213,28 @@ namespace IntervalSolver
         T delta = f_d_x * f_d_x + 2 * E * u;
         if (delta < 0)
         {
-            return std::pair(nullopt,nullopt);
+            return output;
         }
 
-        if (u == 0) // (&& delta >= 0)
+        if (abs(u) < zero_tol) // u ~= 0 (&& delta >= 0)
         {
-            if (f_d_x == 0)
+            if (abs(f_d_x) < zero_tol)
             {
-                return std::pair(nullopt,nullopt);
+                return output;
             }
             else if (f_d_x > 0)
             {
-                inteval_t filter(Policies::checking::neg_inf(),x+E/f_d_x);
-                inteval_t output = intersect(X0,filter);
-                return std::pair(output,nullopt);
+                interval_t filter(Policies::checking::neg_inf(),x+E/f_d_x);
+                output[0] = intersect(Xs1,filter);
+                output[1] = intersect(Xs2,filter);
+                return output;
             }
             else // (f_d_x < 0)
             {
-                inteval_t filter(x+E/f_d_x,Policies::checking::pos_inf());
-                inteval_t output = intersect(X0,filter);
-                return std::pair(output,nullopt);
+                interval_t filter(x+E/f_d_x,Policies::checking::pos_inf());
+                output[0] = intersect(Xs1,filter);
+                output[1] = intersect(Xs2,filter);
+                return output;
             }
             
         }
@@ -180,18 +250,21 @@ namespace IntervalSolver
 
             if (u > 0)
             {
-                inteval_t filter(r_min,r_max);
-                inteval_t output = intersect(X0,filter);
-                return std::pair(output,nullopt);
+                interval_t filter(r_min,r_max);
+                output[0] = intersect(Xs1,filter);
+                output[1] = intersect(Xs2,filter);
+                return output;
             }
             else // (u < 0)
             {
-                inteval_t filter_min(Policies::checking::neg_inf(),r_min);
-                inteval_t output_min = intersect(X0,filter_min);
+                interval_t filter_min(Policies::checking::neg_inf(),r_min);
+                output[0] = intersect(Xs1,filter_min);
+                output[1] = intersect(Xs2,filter_min);
 
-                inteval_t filter_max(r_max,Policies::checking::pos_inf());
-                inteval_t output_max = intersect(X0,filter_max);
-                return std::pair(output_min,output_max);
+                interval_t filter_max(r_max,Policies::checking::pos_inf());
+                output[2] = intersect(Xs1,filter_max);
+                output[3] = intersect(Xs2,filter_max);
+                return output;
             }
         }
     }
@@ -216,9 +289,9 @@ namespace IntervalSolver
         using namespace Visualisation;
 #endif
 
-        typedef interval<T, Policies> inteval_t;
+        typedef interval<T, Policies> interval_t;
 
-        std::list<inteval_t> interval_list;
+        std::list<interval_t> interval_list;
         
         // 2. Initialize minimum estimate
         T best_loc = left;
@@ -266,7 +339,7 @@ namespace IntervalSolver
         while (!interval_list.empty())
         {
             // a.
-            inteval_t X = interval_list.front();
+            interval_t X = interval_list.front();
 
 #ifdef DEBUG_VISUALISE
             Plot2D plot = init_plot(left,right);
@@ -281,7 +354,7 @@ namespace IntervalSolver
 #endif
 
             // b.
-            inteval_t F0 = F(X);
+            interval_t F0 = F(X);
             if (F0.lower() > best)
             {
                 interval_list.pop_front();
@@ -317,24 +390,24 @@ namespace IntervalSolver
             }
 
             auto candidate_intervals = interval_reduction(X,f,F,f_d,F_d,f_dd,F_dd,x_mid,f_mid,f_d_mid,best);
-            auto interval_1 = candidate_intervals.first;
-            auto interval_2 = candidate_intervals.second;
-
-            if (interval_1)
+            for(auto& interval : candidate_intervals)
             {
-                inteval_t i1 = interval_1.value();
-                if (width(i1) > epsilon/4)
+                if (width(interval) > epsilon/4)
                 {
-                    interval_list.push_back(i1);
+                    interval_list.push_back(interval);
                 }
-            }
-
-            if (interval_2)
-            {
-                inteval_t i2 = interval_2.value();
-                if (width(i2) > epsilon/4)
+                else
                 {
-                    interval_list.push_back(i2);
+                    if (!empty(interval))
+                    {
+                        T candidate_loc = median(interval);
+                        T candidate = f(candidate_loc);
+                        if (candidate < best)
+                        {
+                            best = candidate;
+                            best_loc = candidate_loc;
+                        }
+                    }
                 }
             }
 
@@ -360,9 +433,9 @@ namespace IntervalSolver
         using namespace Visualisation;
 #endif
         
-        typedef interval<T, Policies> inteval_t;
+        typedef interval<T, Policies> interval_t;
 
-        std::list<inteval_t> interval_list;
+        std::list<interval_t> interval_list;
         
         // 2. Initialize minimum estimate
         T best_loc = left;
@@ -410,7 +483,7 @@ namespace IntervalSolver
         while (!interval_list.empty())
         {
             // a. Get a search interval
-            inteval_t X = interval_list.front();
+            interval_t X = interval_list.front();
 
             // a(bis). Debug visualisation
 #ifdef DEBUG_VISUALISE
@@ -426,7 +499,7 @@ namespace IntervalSolver
 #endif
 
             // b. Estimate its image; discard it if its lowest is greater than the current estimate of the minimum
-            inteval_t F0 = F(X);
+            interval_t F0 = F(X);
             if (F0.lower() > best)
             {
                 interval_list.pop_front();
@@ -468,13 +541,13 @@ namespace IntervalSolver
 
             if (std::abs(a - x_mid) > epsilon/4)
             {
-                inteval_t i_low(a,x_mid);
+                interval_t i_low(a,x_mid);
                 interval_list.push_back(i_low);
             }
 
             if (std::abs(b - x_mid) > epsilon/4)
             {
-                inteval_t i_high(x_mid,b);
+                interval_t i_high(x_mid,b);
                 interval_list.push_back(i_high);
             }
             
