@@ -34,3 +34,5 @@ make_ScalarMin_test(ScalarMinTestPolynomials PolynomialTesting.cpp)
 
 make_ScalarMin_test(ScalarMinTestCircles CirclesTesting.cpp)
 make_ScalarMin_test(ScalarMinTestLineCircle LineCircleTesting.cpp)
+make_ScalarMin_test(ScalarMinTestLinAccLineCircle LinAccLineCircleTesting.cpp)
+make_ScalarMin_test(ScalarMinTestLinAccCircleCircle LinAccCircleCircleTesting.cpp)

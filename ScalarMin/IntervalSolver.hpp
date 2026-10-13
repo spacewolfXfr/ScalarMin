@@ -242,8 +242,8 @@ namespace IntervalSolver
         {
             T a = u/2;
             T b = f_d_x - x*u;
-            T r1 = (-b+sqrt(delta))/(2*a);
-            T r2 = (-b-sqrt(delta))/(2*a);
+            T r1 = (-b+std::sqrt(delta))/(2*a);
+            T r2 = (-b-std::sqrt(delta))/(2*a);
 
             T r_min = std::min(r1,r2);
             T r_max = std::max(r1,r2);
@@ -382,7 +382,7 @@ namespace IntervalSolver
 
                 if (lower_bound.has_value())
                 {
-                    if (abs(best-lower_bound.value()) < epsilon)
+                    if (std::abs(best-lower_bound.value()) < epsilon/4)
                     {
                         return best_loc;
                     }
@@ -528,7 +528,7 @@ namespace IntervalSolver
 
                 if (lower_bound.has_value())
                 {
-                    if (abs(best-lower_bound.value()) < epsilon)
+                    if (std::abs(best-lower_bound.value()) < epsilon/4)
                     {
                         return best_loc;
                     }

@@ -54,10 +54,9 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = (aC*I+vC)*I + phi;
-            interval<T,Policies> line_speed_I = aL*I+vL;
-            interval<T,Policies> x_I = Dx + r*cos(theta_I) - I*nx*line_speed_I;
-            interval<T,Policies> y_I = Dy + r*sin(theta_I) - I*ny*line_speed_I;
+            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
+            interval<T,Policies> x_I = Dx + r*cos(theta_I) - nx*(aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*sin(theta_I) - ny*(aL*square(I)+vL*I);
             return square(x_I) + square(y_I);
         }
 
@@ -84,17 +83,16 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = (aC*I+vC)*I + phi;
+            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
 
             interval<T,Policies> c = cos(theta_I);
             interval<T,Policies> s = sin(theta_I);
 
             interval<T,Policies> omega_I = 2*aC*I + vC;
-            interval<T,Policies> speed_I = aL*I + vL;
             interval<T,Policies> line_d_I = 2*aL*I + vL;
 
-            interval<T,Policies> x_I = Dx + r*c - I*nx*speed_I;
-            interval<T,Policies> y_I = Dy + r*s - I*ny*speed_I;
+            interval<T,Policies> x_I = Dx + r*c - nx*(aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(aL*square(I)+vL*I);
 
             interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
             interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;
@@ -127,17 +125,16 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = (aC*I+vC)*I + phi;
+            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
 
             interval<T,Policies> c = cos(theta_I);
             interval<T,Policies> s = sin(theta_I);
 
             interval<T,Policies> omega_I = 2*aC*I + vC;
             interval<T,Policies> line_d_I = 2*aL*I + vL;
-            interval<T,Policies> speed_I = aL*I + vL;
 
-            interval<T,Policies> x_I = Dx + r*c - I*nx*speed_I;
-            interval<T,Policies> y_I = Dy + r*s - I*ny*speed_I;
+            interval<T,Policies> x_I = Dx + r*c - nx*(aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(aL*square(I)+vL*I);
 
             interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
             interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;

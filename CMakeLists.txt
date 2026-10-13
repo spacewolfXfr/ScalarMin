@@ -40,7 +40,7 @@ if(SCALARMIN_VISUALISATON)
     target_compile_definitions(ScalarMinTest PUBLIC DEBUG_VISUALISE_SAMPLES 200)
 endif()
 
-option(SCALARMIN_TESTING "Include test, using GoogleTest" OFF) # https://google.github.io/googletest/quickstart-cmake.html
+option(SCALARMIN_TESTING "Include test, using GoogleTest" ON) # https://google.github.io/googletest/quickstart-cmake.html
 
 if(SCALARMIN_TESTING)
     include(FetchContent)

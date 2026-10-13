@@ -54,8 +54,8 @@ class LinAccCircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Pol
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta1_I = (a1*I+v1)*I;
-            interval<T,Policies> theta2_I = (a2*I+v2)*I + Dphi;
+            interval<T,Policies> theta1_I = (a1*square(I)+v1*I);
+            interval<T,Policies> theta2_I = (a2*square(I)+v2*I) + Dphi;
             interval<T,Policies> x_I = Dx + r1*cos(theta1_I) - r2*cos(theta2_I);
             interval<T,Policies> y_I = Dy + r1*sin(theta1_I) - r2*sin(theta2_I);
             return square(x_I) + square(y_I);
@@ -88,8 +88,8 @@ class LinAccCircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Pol
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta1_I = (a1*I+v1)*I;
-            interval<T,Policies> theta2_I = (a2*I+v2)*I + Dphi;
+            interval<T,Policies> theta1_I = (a1*square(I)+v1*I);
+            interval<T,Policies> theta2_I = (a2*square(I)+v2*I) + Dphi;
 
             interval<T,Policies> c1 = cos(theta1_I);
             interval<T,Policies> s1 = sin(theta1_I);
@@ -141,8 +141,8 @@ class LinAccCircleCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Pol
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta1_I = (a1*I+v1)*I;
-            interval<T,Policies> theta2_I = (a2*I+v2)*I + Dphi;
+            interval<T,Policies> theta1_I = (a1*square(I)+v1*I);
+            interval<T,Policies> theta2_I = (a2*square(I)+v2*I) + Dphi;
 
             interval<T,Policies> c1 = cos(theta1_I);
             interval<T,Policies> s1 = sin(theta1_I);
@@ -172,29 +172,29 @@ LinAccCircleCircle<T,Policies> linacccirclecircle_easy_special_case(T precision)
 {
     MinimizeTesting::TestValues<T> vals;
     vals.init_left  = 0;
-    vals.init_right = 5;
+    vals.init_right = 3;
     vals.precision  = precision;
-    vals.location   = 4.12087;
-    vals.value      = 0.000722251;
-    vals.hotstart   = 4.2;
+    vals.location   = 2.081770418654643169728874842;
+    vals.value      = 0.027119781606604591528668;
+    vals.hotstart   = 1.8;
 
     return LinAccCircleCircle<T,Policies>(vals,
-        1,1,1,0.5,0,1,0,M_PI,0);
+        1,1,1,2,1,2,2,1,M_PI);
 }
 
 template<typename T, class Policies>
 LinAccCircleCircle<T,Policies> linacccirclecircle_hard_special_case(T precision)
 {
     MinimizeTesting::TestValues<T> vals;
-    vals.init_left  = -5;
-    vals.init_right = 5;
+    vals.init_left  = 0;
+    vals.init_right = 3;
     vals.precision  = precision;
-    vals.location   = 4.12087;
-    vals.value      = 0.000722251;
+    vals.location   = 2.081770418654643169728874842;
+    vals.value      = 0.027119781606604591528668;
     vals.hotstart   = -1;
 
     return LinAccCircleCircle<T,Policies>(vals,
-        1,1,1,0.5,0,1,0,M_PI,0);
+        1,1,1,2,1,2,2,1,M_PI);
 }
 
 /**

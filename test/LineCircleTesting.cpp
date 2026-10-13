@@ -77,12 +77,12 @@ TYPED_TEST_CASE(IntervalTestLineCircle,PairedTestTypes);
 
 TYPED_TEST(IntervalTestLineCircle, EasySpecial)
 {
-    this->test_special_easy();
+  this->test_special_easy();
 }
 
 TYPED_TEST(IntervalTestLineCircle, HardSpecial)
 {
-    this->test_special_hard();
+  this->test_special_hard();
 }
 
 TYPED_TEST(IntervalTestLineCircle, UnitSpeed)
