@@ -43,10 +43,9 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
 
         pure T f(T t) const
         {
-            T theta = (aC*t+vC)*t + phi;
-            T line_speed = aL*t+vL;
-            T x = Dx + r*std::cos(theta) - t*nx*line_speed;
-            T y = Dy + r*std::sin(theta) - t*ny*line_speed;
+            T theta = (0.5*aC*t+vC)*t + phi;
+            T x = Dx + r*std::cos(theta) - t*nx*(0.5*aL*t+vL);
+            T y = Dy + r*std::sin(theta) - t*ny*(0.5*aL*t+vL);
             return x*x + y*y;
         }
 
@@ -54,24 +53,23 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
-            interval<T,Policies> x_I = Dx + r*cos(theta_I) - nx*(aL*square(I)+vL*I);
-            interval<T,Policies> y_I = Dy + r*sin(theta_I) - ny*(aL*square(I)+vL*I);
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
+            interval<T,Policies> x_I = Dx + r*cos(theta_I) - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*sin(theta_I) - ny*(0.5*aL*square(I)+vL*I);
             return square(x_I) + square(y_I);
         }
 
         pure T f_d(T t) const
         {
-            T theta = (aC*t+vC)*t + phi;
+            T theta = (0.5*aC*t+vC)*t + phi;
             T c = std::cos(theta);
             T s = std::sin(theta);
 
-            T omega = 2*aC*t + vC;
-            T speed = aL*t + vL;
-            T line_d = 2*aL*t + vL;
+            T omega = aC*t + vC;
+            T line_d = aL*t + vL;
 
-            T x = Dx + r*c - t*nx*speed;
-            T y = Dy + r*s - t*ny*speed;
+            T x = Dx + r*c - t*nx*(0.5*aL*t + vL);
+            T y = Dy + r*s - t*ny*(0.5*aL*t + vL);
 
             T x_d = -omega*r*s - nx*line_d;
             T y_d =  omega*r*c - ny*line_d;
@@ -83,16 +81,16 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
 
             interval<T,Policies> c = cos(theta_I);
             interval<T,Policies> s = sin(theta_I);
 
-            interval<T,Policies> omega_I = 2*aC*I + vC;
-            interval<T,Policies> line_d_I = 2*aL*I + vL;
+            interval<T,Policies> omega_I = aC*I + vC;
+            interval<T,Policies> line_d_I = aL*I + vL;
 
-            interval<T,Policies> x_I = Dx + r*c - nx*(aL*square(I)+vL*I);
-            interval<T,Policies> y_I = Dy + r*s - ny*(aL*square(I)+vL*I);
+            interval<T,Policies> x_I = Dx + r*c - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(0.5*aL*square(I)+vL*I);
 
             interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
             interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;
@@ -101,22 +99,22 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
 
         pure T f_dd(T t) const
         {
-            T theta = (aC*t+vC)*t + phi;
+            T theta = (0.5*aC*t+vC)*t + phi;
             T c = std::cos(theta);
             T s = std::sin(theta);
 
-            T omega = 2*aC*t + vC;
-            T omega_d = 2*aC;
-            T line_d = 2*aL*t + vL;
+            T omega = aC*t + vC;
+            T omega_d = aC;
+            T line_d = aL*t + vL;
 
-            T x = Dx + r*c - t*nx*(aL*t + vL);
-            T y = Dy + r*s - t*ny*(aL*t + vL);
+            T x = Dx + r*c - t*nx*(0.5*aL*t + vL);
+            T y = Dy + r*s - t*ny*(0.5*aL*t + vL);
 
             T x_d = -omega*r*s - nx*line_d;
             T y_d =  omega*r*c - ny*line_d;
 
-            T x_dd = -r*(omega*omega*c + omega_d*s) - 2*aL*nx;
-            T y_dd =  r*(-omega*omega*s + omega_d*c) - 2*aL*ny;
+            T x_dd = -r*(omega*omega*c + omega_d*s) - aL*nx;
+            T y_dd =  r*(-omega*omega*s + omega_d*c) - aL*ny;
 
             return (x_d*x_d+x*x_dd + y_d*y_d+y*y_dd)*2;
         }
@@ -125,22 +123,22 @@ class LinAccLineCircle : public MinimizeTesting::TestCaseWithDerivatives<T,Polic
         {
             using namespace boost::numeric;
 
-            interval<T,Policies> theta_I = aC*square(I)+vC*I + phi;
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
 
             interval<T,Policies> c = cos(theta_I);
             interval<T,Policies> s = sin(theta_I);
 
-            interval<T,Policies> omega_I = 2*aC*I + vC;
-            interval<T,Policies> line_d_I = 2*aL*I + vL;
+            interval<T,Policies> omega_I = aC*I + vC;
+            interval<T,Policies> line_d_I = aL*I + vL;
 
-            interval<T,Policies> x_I = Dx + r*c - nx*(aL*square(I)+vL*I);
-            interval<T,Policies> y_I = Dy + r*s - ny*(aL*square(I)+vL*I);
+            interval<T,Policies> x_I = Dx + r*c - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(0.5*aL*square(I)+vL*I);
 
             interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
             interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;
 
-            interval<T,Policies> x_dd_I = -r*(square(omega_I)*c + 2*aC*s) - 2*aL*nx;
-            interval<T,Policies> y_dd_I =  r*(-square(omega_I)*s + 2*aC*c) - 2*aL*ny;
+            interval<T,Policies> x_dd_I = -r*(square(omega_I)*c + aC*s) - aL*nx;
+            interval<T,Policies> y_dd_I =  r*(-square(omega_I)*s + aC*c) - aL*ny;
 
             return (square(x_d_I)+x_I*x_dd_I + square(y_d_I)+y_I*y_dd_I)*static_cast<T>(2);
         }
@@ -158,8 +156,13 @@ LinAccLineCircle<T,Policies> linacclinecircle_easy_special_case(T precision)
     vals.value      = 0.237015;
     vals.hotstart   = 1.;
 
+    // LinAccLineCircle(..., T _Dx, T _Dy, T _r, T _phi, T _aC, T _vC, T _aL, T _vL, T _nx, T _ny)
     return LinAccLineCircle<T,Policies>(vals,
-        1,1,1,0.,0,M_PI,0,0.5,0.8,-0.6);
+        1,1,
+        1,0.,
+        0,M_PI,
+        0,0.5,
+        0.8,-0.6);
 }
 
 template<typename T, class Policies>
@@ -386,15 +389,13 @@ class LinAccLineCircleVDist : public MinimizeTesting::TestCaseWithDerivatives<T,
 
             T V1 = (aC*t+vC)*r;
             T V2 = aL*t+vL;
-            T Vmax,dVmax;
+            T dVmax;
             if (V1 > V2)
             {
-                Vmax = V1;
                 dVmax = aC*r;
             }
             else
             {
-                Vmax = V2;
                 dVmax = aL;
             }
 
@@ -421,9 +422,6 @@ class LinAccLineCircleVDist : public MinimizeTesting::TestCaseWithDerivatives<T,
 
             interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
 
-            interval<T,Policies> V1 = (aC*I+vC)*r;
-            interval<T,Policies> V2 = aL*I+vL;
-            interval<T,Policies> Vmax = max(V1,V2);
             T dV1 = aC*r;
             T dV2 = aL;
             interval<T,Policies> dVmax(std::min(dV1,dV2), std::max(dV1,dV2));
@@ -456,12 +454,13 @@ LinAccLineCircleVDist<T,Policies> linacclinecirclevdist_easy_special_case(T prec
     vals.init_left  = 0;
     vals.init_right = 5;
     vals.precision  = precision;
-    vals.location   = 1.39796;
-    vals.value      = 0.237015;
-    vals.hotstart   = 1.;
+    vals.location   = 0.;
+    vals.value      = -80;
+    vals.hotstart   = 3.;
+
 
     return LinAccLineCircleVDist<T,Policies>(vals,
-        1,1,1,0.,0,M_PI,0,0.5,0.8,-0.6,0);
+        1,1,1,M_PI,-1,9,1,0,1.,0,1);
 }
 
 template<typename T, class Policies>
@@ -471,12 +470,12 @@ LinAccLineCircleVDist<T,Policies> linacclinecirclevdist_hard_special_case(T prec
     vals.init_left  = -5;
     vals.init_right = 5;
     vals.precision  = precision;
-    vals.location   = 1.39796;
-    vals.value      = 0.237015;
-    vals.hotstart   = -2.;
+    vals.location   = -3.2723351522824657;
+    vals.value      = -138.58488793225587;
+    vals.hotstart   = 3.;
 
     return LinAccLineCircleVDist<T,Policies>(vals,
-        1,1,1,0.,0,M_PI,0,0.5,0.8,-0.6,0);
+        1,1,1,M_PI,-1,9,1,0,1.,0,1);
 }
 
 /**

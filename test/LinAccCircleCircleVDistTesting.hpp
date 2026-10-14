@@ -35,7 +35,7 @@
 
 // Maximum time-distance correction for VDist tests
 #if !defined(TEST_MAX_TDIST)
-#define TEST_MAX_TDIST 1
+#define TEST_MAX_TDIST 2
 #endif
 
 // ==================== GTest classes ==================== //
