@@ -180,7 +180,7 @@ LinAccLineCircle<T,Policies> linacclinecircle_hard_special_case(T precision)
 /**
  * @brief Generate a random test case for the Line-circle distance function with linear acceleration
  * 
- * @tparam T Float subtype (float,double, long double)
+ * @tparam T Float subtype (float,T, long T)
  * @tparam Policies Rounding policies (relevant for Interval methods)
  * @param seed RNG seed
  * @param speed Initial speed for circular and line motions. If non-positive, separate random values are sampled
@@ -253,3 +253,198 @@ LinAccLineCircle<T,Policies> generate_linacclinecircle_test_case(
         a_line,v_line,
         std::cos(alpha),std::sin(alpha));
 }
+
+
+
+
+/***** Variant with corrected acceleration formula and time-speed based distance computation *****/
+
+template<typename T, class Policies>
+class LinAccLineCircleVDist : public MinimizeTesting::TestCaseWithDerivatives<T,Policies>
+{
+    private:
+        const T Dx,Dy;
+        const T r,phi;
+        const T aC,vC;
+        const T aL,vL;
+        const T nx,ny;
+        const T tdist;
+
+    public:
+        void print_params()
+        {
+            std::cout   << std::setprecision(5)
+                        << "Dx   : " << Dx      << std::endl
+                        << "Dy   : " << Dy      << std::endl
+                        << "r    : " << r       << std::endl
+                        << "phi  : " << phi     << std::endl
+                        << "aC   : " << aC      << std::endl
+                        << "vC   : " << vC      << std::endl
+                        << "aL   : " << aL      << std::endl
+                        << "vL   : " << vL      << std::endl
+                        << "nx   : " << nx      << std::endl
+                        << "ny   : " << ny      << std::endl
+                        << "tdist: " << tdist   << std::endl << std::endl;
+        }
+
+        LinAccLineCircleVDist(MinimizeTesting::TestValues<T> vals, T _Dx, T _Dy, T _r, T _phi, T _aC, T _vC, T _aL, T _vL, T _nx, T _ny, T _tdist)
+        : MinimizeTesting::TestCaseWithDerivatives<T,Policies>(vals),
+            Dx(_Dx), Dy(_Dy), r(_r), phi(_phi), aC(_aC), vC(_vC), aL(_aL), vL(_vL), nx(_nx), ny(_ny), tdist(_tdist) {}
+
+        pure T f(T t) const
+        {
+            T V1 = (aC*t+vC)*r;
+            T V2 = aL*t+vL;
+            T Vmax = std::max(V1,V2);
+
+            T theta = (0.5*aC*t+vC)*t + phi;
+            T line_speed = 0.5*aL*t+vL;
+            T x = Dx + r*std::cos(theta) - t*nx*line_speed;
+            T y = Dy + r*std::sin(theta) - t*ny*line_speed;
+            return x*x + y*y - tdist*tdist*Vmax*Vmax;
+        }
+
+        pure IntervalSolver::interval<T,Policies> F(const IntervalSolver::interval<T,Policies> &I) const
+        {
+            using namespace boost::numeric;
+
+            IntervalSolver::interval<T,Policies> V1 = (aC*I+vC)*r;
+            IntervalSolver::interval<T,Policies> V2 = aL*I+vL;
+            IntervalSolver::interval<T,Policies> Vmax = max(V1,V2);
+
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
+            interval<T,Policies> x_I = Dx + r*cos(theta_I) - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*sin(theta_I) - ny*(0.5*aL*square(I)+vL*I);
+            return square(x_I) + square(y_I) - tdist*tdist * square(Vmax);
+        }
+
+        pure T f_d(T t) const
+        {
+            T theta = (0.5*aC*t+vC)*t + phi;
+            T c = std::cos(theta);
+            T s = std::sin(theta);
+
+            T V1 = (aC*t+vC)*r;
+            T V2 = aL*t+vL;
+            T Vmax,dVmax;
+            if (V1 > V2)
+            {
+                Vmax = V1;
+                dVmax = aC*r;
+            }
+            else
+            {
+                Vmax = V2;
+                dVmax = aL;
+            }
+
+            T omega = aC*t + vC;
+            T speed = 0.5*aL*t + vL;
+            T line_d = aL*t + vL;
+
+            T x = Dx + r*c - t*nx*speed;
+            T y = Dy + r*s - t*ny*speed;
+
+            T x_d = -omega*r*s - nx*line_d;
+            T y_d =  omega*r*c - ny*line_d;
+
+            return (x_d*x + y_d*y - tdist*tdist*dVmax*Vmax)*2;
+        }
+
+        pure IntervalSolver::interval<T,Policies> F_d(const IntervalSolver::interval<T,Policies> &I) const
+        {
+            using namespace boost::numeric;
+
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
+
+            interval<T,Policies> V1 = (aC*I+vC)*r;
+            interval<T,Policies> V2 = aL*I+vL;
+            interval<T,Policies> Vmax = max(V1,V2);
+            T dV1 = aC*r;
+            T dV2 = aL;
+            interval<T,Policies> dVmax(std::min(dV1,dV2), std::max(dV1,dV2));
+
+            interval<T,Policies> c = cos(theta_I);
+            interval<T,Policies> s = sin(theta_I);
+
+            interval<T,Policies> omega_I = aC*I + vC;
+            interval<T,Policies> line_d_I = aL*I + vL;
+
+            interval<T,Policies> x_I = Dx + r*c - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(0.5*aL*square(I)+vL*I);
+
+            interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
+            interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;
+            return (x_d_I*x_I + y_d_I*y_I - tdist*tdist*dVmax*Vmax)*static_cast<T>(2);
+        }
+
+        pure T f_dd(T t) const
+        {
+            T theta = (0.5*aC*t+vC)*t + phi;
+            T c = std::cos(theta);
+            T s = std::sin(theta);
+
+            T V1 = (aC*t+vC)*r;
+            T V2 = aL*t+vL;
+            T Vmax,dVmax;
+            if (V1 > V2)
+            {
+                Vmax = V1;
+                dVmax = aC*r;
+            }
+            else
+            {
+                Vmax = V2;
+                dVmax = aL;
+            }
+
+
+            T omega = aC*t + vC;
+            T omega_d = aC;
+            T line_d = aL*t + vL;
+
+            T x = Dx + r*c - t*nx*(0.5*aL*t + vL);
+            T y = Dy + r*s - t*ny*(0.5*aL*t + vL);
+
+            T x_d = -omega*r*s - nx*line_d;
+            T y_d =  omega*r*c - ny*line_d;
+
+            T x_dd = -r*(omega*omega*c + omega_d*s) - aL*nx;
+            T y_dd =  r*(-omega*omega*s + omega_d*c) - aL*ny;
+
+            return (x_d*x_d+x*x_dd + y_d*y_d+y*y_dd - tdist*tdist*dVmax*dVmax)*2;
+        }
+
+        pure IntervalSolver::interval<T,Policies> F_dd(const IntervalSolver::interval<T,Policies> &I) const
+        {
+            using namespace boost::numeric;
+
+            interval<T,Policies> theta_I = 0.5*aC*square(I)+vC*I + phi;
+
+            interval<T,Policies> V1 = (aC*I+vC)*r;
+            interval<T,Policies> V2 = aL*I+vL;
+            interval<T,Policies> Vmax = max(V1,V2);
+            T dV1 = aC*r;
+            T dV2 = aL;
+            interval<T,Policies> dVmax(std::min(dV1,dV2), std::max(dV1,dV2));
+
+
+            interval<T,Policies> c = cos(theta_I);
+            interval<T,Policies> s = sin(theta_I);
+
+            interval<T,Policies> omega_I = aC*I + vC;
+            interval<T,Policies> line_d_I = aL*I + vL;
+
+            interval<T,Policies> x_I = Dx + r*c - nx*(0.5*aL*square(I)+vL*I);
+            interval<T,Policies> y_I = Dy + r*s - ny*(0.5*aL*square(I)+vL*I);
+
+            interval<T,Policies> x_d_I = -omega_I*r*s - nx*line_d_I;
+            interval<T,Policies> y_d_I =  omega_I*r*c - ny*line_d_I;
+
+            interval<T,Policies> x_dd_I = -r*(square(omega_I)*c + aC*s) - aL*nx;
+            interval<T,Policies> y_dd_I =  r*(-square(omega_I)*s + aC*c) - aL*ny;
+
+            return (square(x_d_I)+x_I*x_dd_I + square(y_d_I)+y_I*y_dd_I - tdist*tdist*dVmax*dVmax)*static_cast<T>(2);
+        }
+
+};
