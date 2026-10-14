@@ -478,3 +478,117 @@ class LinAccCircleCircleVDist : public MinimizeTesting::TestCaseWithDerivatives<
         }
 
 };
+
+template<typename T, class Policies>
+LinAccCircleCircleVDist<T,Policies> linacccirclecirclevdist_easy_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = 0;
+    vals.init_right = 3;
+    vals.precision  = precision;
+    vals.location   = 2.081770418654643169728874842;
+    vals.value      = 0.027119781606604591528668;
+    vals.hotstart   = 1.8;
+
+    return LinAccCircleCircleVDist<T,Policies>(vals,
+        1,1,1,2,2,2,4,1,0,M_PI,0);
+}
+
+template<typename T, class Policies>
+LinAccCircleCircleVDist<T,Policies> linacccirclecirclevdist_hard_special_case(T precision)
+{
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = 0;
+    vals.init_right = 3;
+    vals.precision  = precision;
+    vals.location   = 2.081770418654643169728874842;
+    vals.value      = 0.027119781606604591528668;
+    vals.hotstart   = -1;
+
+    return LinAccCircleCircleVDist<T,Policies>(vals,
+        1,1,1,2,2,2,4,1,0,M_PI,0);
+}
+
+/**
+ * @brief Generate a random test case for the corrected circle-circle distance function with linear acceleration
+ * 
+ * @tparam T Float subtype (float,T, long T)
+ * @tparam Policies Rounding policies (relevant for Interval methods)
+ * @param seed RNG seed
+ * @param speed Initial linear speed for the two vehicles on the circles. If non-positive, is picked randomly for each vehicle
+ * @param max_accel Maximum absolute acceleration for angular speed. If non-positive, both accelerations are set to zero
+ * @param max_tdist Maximum time distance scaling. If non-positive, time-distance correction is disabled
+ * @param I_min Start of the search interval
+ * @param I_max End of the search interval
+ * @param precision Required precision result
+ * @return LinAccCircleCircleVDist<T,Policies> A corrected Circle-circle test case with linearly varying angular speed
+ */
+template<typename T, class Policies>
+LinAccCircleCircleVDist<T,Policies> generate_linacccirclecirclevdist_test_case(
+    int seed, T speed, T max_accel, T max_tdist, T I_min, T I_max, T precision)
+{
+    std::default_random_engine gen(seed); // Some seeded RNG
+
+    T v1,v2;
+
+    if (speed > 0)
+    {
+        v1 = speed;
+        v2 = speed;
+    }
+    else
+    {
+        std::uniform_real_distribution<T> dis_speed(0.1, 10);
+        v1 = dis_speed(gen);
+        v2 = dis_speed(gen);
+    }
+
+    T a1,a2;
+    if (max_accel > 0)
+    {
+        std::uniform_real_distribution<T> dis_accel(-max_accel, max_accel);
+        a1 = dis_accel(gen);
+        a2 = dis_accel(gen);
+    }
+    else
+    {
+        a1 = 0;
+        a2 = 0;
+    }
+
+    T phi1,phi2;
+    std::uniform_real_distribution<T> dis_phi(-M_PI, M_PI);
+    phi1 = dis_phi(gen);
+    phi2 = dis_phi(gen);
+
+    T r1,r2;
+    std::uniform_real_distribution<T> dis_radius(0.1, 10);
+
+    r1 = dis_radius(gen);
+    r2 = dis_radius(gen);
+
+    T Dx,Dy;
+    Dx = dis_radius(gen);
+    Dy = dis_radius(gen);
+
+    T tdist;
+    if (max_tdist > 0)
+    {
+        std::uniform_real_distribution<T> dis_tdist(0, max_tdist);
+        tdist = dis_tdist(gen);
+    }
+    else
+    {
+        tdist = 0;
+    }
+
+    MinimizeTesting::TestValues<T> vals;
+    vals.init_left  = I_min;
+    vals.init_right = I_max;
+    vals.precision  = precision;
+
+    vals.location   = NAN;
+    vals.value      = NAN;
+
+    return LinAccCircleCircleVDist<T,Policies>(vals,Dx,Dy,r1,r2,a1,v1/r1,a2,v2/r2,phi1,phi2,tdist);
+}
